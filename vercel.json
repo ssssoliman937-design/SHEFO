@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "server.js", "use": "@vercel/node" },
+    { "src": "api/cleanup-stale-rooms.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    {
+      "src": "/js/(.*)",
+      "dest": "/public/js/$1",
+      "headers": { "X-Content-Type-Options": "nosniff" }
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/public/css/$1",
+      "headers": { "X-Content-Type-Options": "nosniff" }
+    },
+    { "src": "/(.*\\.png)", "dest": "/public/$1" },
+    { "src": "/(.*\\.json)", "dest": "/public/$1" },
+    { "src": "/sw.js", "dest": "/public/sw.js" },
+    { "src": "/api/cleanup-stale-rooms", "dest": "/api/cleanup-stale-rooms.js" },
+    {
+      "src": "/(.*)",
+      "dest": "/server.js",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(self), geolocation=()",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://*.gstatic.com https://apis.google.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src *; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://www.google.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+      }
+    }
+  ],
+  "crons": [
+    { "path": "/api/cleanup-stale-rooms", "schedule": "0 3 * * *" }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "name": "dea - Stale Room Cleanup",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hours", "hoursInterval": 6 }
+          ]
+        }
+      },
+      "id": "trigger1",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-200, 260]
+    },
+    {
+      "parameters": {
+        "url": "https://cuafa-9f3b6-default-rtdb.firebaseio.com/dond_rooms.json",
+        "options": {}
+      },
+      "id": "getDond",
+      "name": "Get dond_rooms",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// dond_rooms.json is { roomId: { status, createdAt, ... }, ... } or null.\n// Same staleness rule as createRoom()'s STALE_ROOM_MS in firebase-engine.js:\n// finished, missing createdAt, or older than 6 hours.\nconst STALE_MS = 6 * 60 * 60 * 1000;\nconst rooms = $input.first().json || {};\nconst now = Date.now();\nconst out = [];\nfor (const roomId of Object.keys(rooms)) {\n  const room = rooms[roomId] || {};\n  const isStale = room.status === 'finished' || !room.createdAt || (now - room.createdAt) > STALE_MS;\n  if (isStale) {\n    out.push({ json: { roomId, path: 'dond_rooms/' + roomId } });\n  }\n}\nreturn out;"
+      },
+      "id": "filterDond",
+      "name": "Filter Stale (dond)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 100]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "batchDond",
+      "name": "Split In Batches (dond)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [480, 100]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://cuafa-9f3b6-default-rtdb.firebaseio.com/{{ $json.path }}.json",
+        "options": {}
+      },
+      "id": "deleteDond",
+      "name": "Delete Room (dond)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 100]
+    },
+    {
+      "parameters": {
+        "url": "https://cuafa-9f3b6-default-rtdb.firebaseio.com/mazad_rooms.json",
+        "options": {}
+      },
+      "id": "getMazad",
+      "name": "Get mazad_rooms",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 420]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Same rule as the dond branch - mazad_rooms uses status: 'waiting_guest' | 'auction' | 'simulating' | 'finished'.\nconst STALE_MS = 6 * 60 * 60 * 1000;\nconst rooms = $input.first().json || {};\nconst now = Date.now();\nconst out = [];\nfor (const roomId of Object.keys(rooms)) {\n  const room = rooms[roomId] || {};\n  const isStale = room.status === 'finished' || !room.createdAt || (now - room.createdAt) > STALE_MS;\n  if (isStale) {\n    out.push({ json: { roomId, path: 'mazad_rooms/' + roomId } });\n  }\n}\nreturn out;"
+      },
+      "id": "filterMazad",
+      "name": "Filter Stale (mazad)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 420]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "batchMazad",
+      "name": "Split In Batches (mazad)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [480, 420]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://cuafa-9f3b6-default-rtdb.firebaseio.com/{{ $json.path }}.json",
+        "options": {}
+      },
+      "id": "deleteMazad",
+      "name": "Delete Room (mazad)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 420]
+    },
+    {
+      "parameters": {
+        "content": "## قبل التشغيل\n- استبدل الرابط `cuafa-9f3b6-default-rtdb.firebaseio.com` لو غيّرت FIREBASE_DB_URL.\n- الفيرمبيز مفيهوش Security Rules دلوقتي، فده بيشتغل من غير أي مصادقة - لو اتحطت قواعد لاحقًا، لازم تضاف credentials هنا كمان.\n- Split In Batches بيرجع لنفسه (loop) لحد ما يخلص كل غرفة قديمة - اتأكد إنه متوصل صح بعد الاستيراد.",
+        "height": 220,
+        "width": 340
+      },
+      "id": "note1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-200, 0]
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [[
+        { "node": "Get dond_rooms", "type": "main", "index": 0 },
+        { "node": "Get mazad_rooms", "type": "main", "index": 0 }
+      ]]
+    },
+    "Get dond_rooms": { "main": [[{ "node": "Filter Stale (dond)", "type": "main", "index": 0 }]] },
+    "Filter Stale (dond)": { "main": [[{ "node": "Split In Batches (dond)", "type": "main", "index": 0 }]] },
+    "Split In Batches (dond)": { "main": [[], [{ "node": "Delete Room (dond)", "type": "main", "index": 0 }]] },
+    "Delete Room (dond)": { "main": [[{ "node": "Split In Batches (dond)", "type": "main", "index": 0 }]] },
+    "Get mazad_rooms": { "main": [[{ "node": "Filter Stale (mazad)", "type": "main", "index": 0 }]] },
+    "Filter Stale (mazad)": { "main": [[{ "node": "Split In Batches (mazad)", "type": "main", "index": 0 }]] },
+    "Split In Batches (mazad)": { "main": [[], [{ "node": "Delete Room (mazad)", "type": "main", "index": 0 }]] },
+    "Delete Room (mazad)": { "main": [[{ "node": "Split In Batches (mazad)", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

@@ -1,0 +1,204 @@
+/* Auction ("المزاد") game - styles layered on top of the shared /css/style.css
+   design tokens (--gold-primary, --neon-blue/green/red, --text-main/muted,
+   .glass-card, .btn, .view-section, .lineup-strip etc all come from there). */
+
+.auction-layout {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 12px 40px;
+}
+
+/* ---------- budget bars ---------- */
+.budget-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.budget-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.budget-name {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+.budget-bar {
+  height: 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.budget-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+.budget-fill.host { background: linear-gradient(90deg, #1f8f82, var(--neon-blue)); }
+.budget-fill.guest { background: linear-gradient(90deg, #1f8f4f, var(--neon-green)); }
+.budget-value {
+  font-family: var(--font-nums);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  direction: ltr;
+  text-align: right;
+}
+
+/* ---------- round result banner ---------- */
+.round-result-banner {
+  padding: 12px 16px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--gold-bright);
+  border-color: var(--gold-primary);
+}
+
+/* ---------- bidding block ---------- */
+.auction-block {
+  padding: 18px;
+}
+.auc-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.auc-round-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-main);
+}
+.auc-turn-pill {
+  font-family: var(--font-nums);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(255, 45, 85, 0.12);
+  border: 1px solid var(--live-red, #ff2d55);
+  color: var(--live-red, #ff2d55);
+  animation: livePulse 1.2s ease-in-out infinite;
+}
+.auc-turn-pill.waiting {
+  background: rgba(159, 176, 166, 0.1);
+  border-color: var(--border-glass);
+  color: var(--text-muted);
+  animation: none;
+}
+
+.auc-admin-peek {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px dashed var(--gold-primary);
+  font-size: 0.85rem;
+}
+.auc-peek-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-muted);
+}
+.auc-peek-row b {
+  color: var(--gold-bright);
+}
+
+.auc-player-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+/* Retriggered via JS (removed + re-added) each time a new player goes up
+   for bidding - a static element's own CSS animation only plays once on
+   page load otherwise, since the DOM node itself never changes. */
+@media (prefers-reduced-motion: no-preference) {
+  .auc-player-card.pop-in { animation: aucCardPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes aucCardPop { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+}
+.auc-player-rating {
+  font-family: var(--font-nums);
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: var(--bg-dark);
+  background: var(--gold-gradient);
+  border-radius: 12px;
+  min-width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auc-player-name {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+.auc-player-meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.auc-bid-status {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.auc-current-bid {
+  font-family: var(--font-nums);
+  font-weight: 900;
+  font-size: 1.3rem;
+  color: var(--gold-bright);
+  direction: ltr;
+}
+.auc-current-bidder {
+  font-size: 0.8rem;
+  color: var(--neon-blue);
+  font-weight: 700;
+}
+
+.auc-bid-controls {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+}
+.auc-bid-controls .stylish-input {
+  direction: ltr;
+  text-align: right;
+  font-family: var(--font-nums);
+}
+.auc-hint {
+  margin-top: 8px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+.auc-hint.error {
+  color: var(--neon-red);
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .budget-row { grid-template-columns: 1fr; }
+  .auc-bid-controls { grid-template-columns: 1fr; }
+}

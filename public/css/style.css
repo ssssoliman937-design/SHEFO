@@ -1,0 +1,2432 @@
+/* "Broadcast Vault" - a live football broadcast graphics package fused with
+   a bank-vault game show. Pitch-ink night stadium, brushed vault gold as the
+   dominant character color (not a neon glow), and three accents that each
+   carry exactly one job: broadcast red for urgency/live, turf green for
+   success, muted teal for scoreboard info, violet for helper-card magic. */
+:root {
+  --bg-dark: #071410;
+  --bg-dark-2: #0c1f18;
+  --bg-card: rgba(11, 26, 20, 0.78);
+  --border-glass: rgba(212, 175, 55, 0.18);
+  --gold-primary: #d4af37;
+  --gold-bright: #f2cd5c;
+  --gold-gradient: linear-gradient(135deg, #f2cd5c 0%, #b8860b 100%);
+  --neon-green: #3ccb6f;
+  --neon-blue: #59d5c8;
+  --neon-red: #e11d2e;
+  --accent-purple: #a56cff;
+  /* Broadcast identity refresh: a punchier live-red/cyan pair used only by
+     new HUD-style elements (ticker, live pill, eyebrow labels) - kept
+     separate from --neon-red/--neon-blue so their existing danger/info
+     meaning elsewhere in the sheet is untouched. */
+  --live-red: #ff2d55;
+  --live-cyan: #22d3d0;
+  --text-main: #f5f7f0;
+  --text-muted: #9fb0a6;
+  --card-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
+  --font-arabic: 'Cairo', sans-serif;
+  --font-display: 'Baloo Bhaijaan 2', 'Cairo', sans-serif;
+  --font-nums: 'Oswald', sans-serif;
+  --transition-smooth: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: var(--font-arabic);
+  direction: rtl;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Battery Saver mode (settings toggle): drops decorative animation/blur
+   work, which used to be a no-op because this class had no CSS rule. */
+body.battery-saver * {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+}
+body.battery-saver .light-beam,
+body.battery-saver .stadium-bg {
+  display: none;
+}
+body.battery-saver .glass-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Background Effects - an aerial view of the center circle, not a generic
+   navy void. Fixed positioning keeps the markings centered on-screen the
+   whole time you scroll, like you're always standing at kickoff. */
+.stadium-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(22, 58, 44, 0.9) 0%, #050d09 75%);
+  z-index: -2;
+}
+
+.stadium-bg::before {
+  /* Center circle */
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(38vmin, 340px);
+  height: min(38vmin, 340px);
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+}
+
+.stadium-bg::after {
+  /* Halfway line */
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1.5px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.light-beam {
+  position: fixed;
+  top: -100px;
+  width: 400px;
+  height: 800px;
+  background: radial-gradient(ellipse at top, rgba(242, 205, 92, 0.14), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.beam-left { left: -100px; transform: rotate(-25deg); }
+.beam-right { right: -100px; transform: rotate(25deg); }
+
+/* Main Container */
+.app-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Glassmorphism Card Utility */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 18px;
+  box-shadow: var(--card-shadow);
+}
+
+.glow-border {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.2);
+}
+
+/* Header Bar */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Broadcast strip: a recurring on-air motif along every panel header (top
+   nav, turn bar, match header) - the visual throughline that ties the
+   lobby, the draft and the live match back to one broadcast package. */
+.top-nav::before,
+.turn-bar::before,
+.mc-header::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--neon-red) 0%, var(--gold-primary) 45%, transparent 75%);
+}
+.turn-bar, .mc-header { position: relative; overflow: hidden; }
+
+/* Live pill + eyebrow label - the concrete HUD vocabulary from the
+   "broadcast live" identity concept: a pulsing on-air dot and small
+   uppercase Oswald labels, reused anywhere a screen needs a quick
+   at-a-glance status instead of a full paragraph. */
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 45, 85, 0.1);
+  border: 1px solid rgba(255, 45, 85, 0.35);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: var(--font-nums);
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--live-red);
+}
+.live-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live-red);
+  box-shadow: 0 0 8px var(--live-red);
+  animation: livePulse 1.2s ease-in-out infinite;
+}
+@keyframes livePulse { 50% { opacity: 0.3; } }
+
+.eyebrow-label {
+  font-family: var(--font-nums);
+  font-size: 0.68rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--live-cyan);
+  margin-bottom: 4px;
+}
+
+/* Quiet, single-line link - replaces a full rules block wherever the
+   detail belongs one click away instead of always on-screen. */
+.link-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--live-cyan);
+  font-family: var(--font-arabic);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 4px 0;
+}
+
+/* Collapsible section (lineup during draft/auction) - closed by default so
+   the focal decision on screen doesn't compete with a full roster. */
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-family: var(--font-nums);
+  font-size: 0.78rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.collapse-toggle .chev { color: var(--live-cyan); transition: transform 0.2s ease; }
+.collapse-toggle.open .chev { transform: rotate(180deg); }
+.collapse-body { overflow: hidden; max-height: 0; transition: max-height 0.25s ease; }
+.collapse-body.open { max-height: 2000px; margin-top: 10px; }
+
+.game-logo {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.gold-text {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.room-info-bar {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.info-badge {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 14px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.room-code {
+  font-family: var(--font-nums);
+  color: var(--gold-primary);
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.role-pill {
+  background: var(--neon-blue);
+  color: #000;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: transform 0.2s;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.btn-icon:hover { transform: scale(1.2); }
+.btn-icon:active { transform: scale(0.92); }
+
+/* Banners */
+.notification-banner, .spectator-banner {
+  padding: 10px 20px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: 700;
+  animation: fadeIn 0.3s ease;
+}
+
+.notification-banner { background: rgba(89, 213, 200, 0.16); border: 1px solid var(--neon-blue); color: var(--neon-blue); }
+.spectator-banner { background: rgba(212, 175, 55, 0.15); border: 1px solid var(--gold-primary); color: var(--gold-primary); }
+
+/* Buttons - vault plaque construction: rectangular corners, a bevelled
+   border instead of a flat one, and four rivet dots. Every button reads as
+   "engraved metal plate" first, whatever color the action underneath is. */
+.btn {
+  padding: 13px 28px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 3px 10px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-arabic);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0.4s ease;
+  z-index: -1;
+}
+
+.btn:hover::before {
+  transform: translateX(0);
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 7px 7px;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 1.4px, transparent 1.6px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 1.4px, transparent 1.6px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 1.4px, transparent 1.6px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 1.4px, transparent 1.6px);
+  background-position: 0% 0%, 100% 0%, 0% 100%, 100% 100%;
+}
+
+.btn-primary {
+  background: var(--neon-blue);
+  color: #000;
+  box-shadow: 0 0 25px rgba(89, 213, 200, 0.3);
+}
+.btn-primary:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 35px rgba(89, 213, 200, 0.5);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1.5px solid var(--border-glass);
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+.gold-btn {
+  background: var(--gold-gradient);
+  color: #000;
+  font-weight: 800;
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35);
+}
+.gold-btn:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.5);
+}
+
+.ai-btn-wrapper {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Gold, not purple - purple is reserved for helper-card magic (steal/
+   protection/etc) elsewhere in the UI. Reusing it here for the single
+   biggest lobby CTA fought that meaning and broke the one-accent hierarchy. */
+.btn-ai {
+  background: var(--gold-gradient);
+  color: #0c1108;
+  font-size: 1.1rem;
+  padding: 15px 24px;
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35);
+  border: 1px solid rgba(242, 205, 92, 0.4);
+}
+
+.btn-ai:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.5);
+  border-color: rgba(242, 205, 92, 0.6);
+}
+
+.btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* View Management */
+.view-section { animation: fadeIn 0.4s ease; }
+
+/* Modals (leaderboard, tutorial, settings) - these previously had zero base
+   CSS at all, so they rendered inline in the page flow instead of as a
+   centered overlay. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.25s ease;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 20px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .modal-content { animation: modalPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes modalPop { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-glass);
+}
+/* Every modal header reuses .glow-title (built for the big lobby hero, 2.8rem)
+   for its own <h2> - at modal width (max 480px) that wraps to two lines and
+   pushes .close-modal to sit mid-height instead of top-aligned. Scoped down
+   to a size that always fits one line, close button stays anchored right. */
+.modal-header .glow-title {
+  font-size: 1.4rem;
+  margin-bottom: 0;
+  flex: 1;
+}
+.modal-header .close-modal {
+  flex-shrink: 0;
+}
+
+.modal-body { text-align: right; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* LOBBY VIEW - a faint mowed-pitch stripe texture grounds the hero in the
+   subject (a real pitch has this pattern) without competing with content. */
+.hero-card {
+  padding: 40px;
+  text-align: center;
+  max-width: 850px;
+  margin: 0 auto;
+  background-image: repeating-linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 40px,
+    transparent 40px,
+    transparent 80px
+  );
+}
+
+.glow-title {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.subtitle { color: var(--text-muted); margin-bottom: 30px; }
+
+.form-container { margin-bottom: 30px; }
+
+.input-group {
+  margin-bottom: 20px;
+  text-align: right;
+}
+
+.input-group label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; }
+.input-group input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  font-family: var(--font-arabic);
+  font-size: 1.1rem;
+  outline: none;
+  transition: border 0.3s;
+}
+.input-group input:focus { border-color: var(--gold-primary); }
+
+.squad-mode-toggle {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.squad-mode-option {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1.5px solid var(--border-glass);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: var(--transition-smooth);
+}
+.squad-mode-option input { width: auto; accent-color: var(--gold-primary); }
+.squad-mode-option:has(input:checked) {
+  border-color: var(--gold-primary);
+  background: rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+.actions-split {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  margin-top: 25px;
+}
+
+.action-box {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.action-box:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.action-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: right;
+}
+
+.action-icon {
+  font-size: 2.2rem;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border-glass);
+}
+
+.action-header h3 { font-size: 1.15rem; color: #fff; margin-bottom: 4px; }
+.action-header p { font-size: 0.85rem; color: var(--text-muted); }
+
+.input-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.stylish-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-glass);
+  color: #fff;
+  font-family: var(--font-arabic);
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.stylish-input:focus {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.full-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.divider-text {
+  font-weight: 800;
+  color: var(--gold-primary);
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+}
+
+.rules-quick {
+  background: rgba(0,0,0,0.3);
+  padding: 20px;
+  border-radius: 14px;
+  text-align: right;
+}
+.rules-quick h4 { color: var(--gold-primary); margin-bottom: 10px; }
+.rules-quick ul { padding-right: 20px; font-size: 0.9rem; color: var(--text-muted); }
+.rules-quick li { margin-bottom: 6px; }
+
+/* DRAFT STAGE */
+.turn-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px;
+  margin-bottom: 20px;
+  border-right: 3px solid var(--neon-green);
+}
+
+.round-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.round-indicator::before {
+  content: 'الدور الحالي';
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  color: var(--neon-green);
+  font-weight: 800;
+}
+
+.position-badge {
+  font-family: var(--font-display);
+  background: none;
+  color: var(--gold-primary);
+  padding: 0;
+  border-radius: 0;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.turn-desc { margin-right: 0; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; }
+
+.players-vs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-tag {
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+.player-tag.host { background: rgba(89, 213, 200, 0.2); border: 1px solid var(--neon-blue); }
+.player-tag.guest { background: rgba(60, 203, 111, 0.2); border: 1px solid var(--neon-green); }
+.player-tag.active-turn {
+  box-shadow: 0 0 15px var(--gold-primary);
+  border-color: var(--gold-primary) !important;
+  animation: glowPulse 1.5s infinite alternate;
+}
+
+.squad-box.active-turn-box, .squad-card.active-turn-box {
+  border-color: var(--gold-primary) !important;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+}
+
+@keyframes glowPulse {
+  0% { transform: scale(1); box-shadow: 0 0 10px var(--gold-primary); }
+  100% { transform: scale(1.05); box-shadow: 0 0 20px var(--gold-primary); }
+}
+.vs { font-family: var(--font-nums); font-weight: 900; color: var(--gold-primary); }
+
+.draft-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+}
+
+.draft-stage {
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  min-width: 0;
+  position: relative;
+  /* .glass-card's backdrop-filter creates its own stacking context, which
+     traps decision-panel's z-index inside it - no z-index value on a
+     descendant can ever out-rank an outside sibling (the fixed PWA banner,
+     z-index 1000) unless this stacking context itself is promoted above it. */
+  z-index: 1001;
+}
+
+/* Briefcases Grid */
+.briefcases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 25px;
+  width: 100%;
+  max-width: 650px;
+  margin-bottom: 25px;
+}
+
+.briefcase-card {
+  height: 220px;
+  background: linear-gradient(145deg, #16352a, #081512);
+  border: 2.5px solid var(--gold-primary);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.6), inset 0 0 20px rgba(212, 175, 55, 0.12);
+}
+
+/* Each new round's 4 briefcases pop in staggered instead of appearing all
+   at once flat - a small "hook" moment at the screen this game is played
+   on the most. */
+@media (prefers-reduced-motion: no-preference) {
+  .briefcase-card { opacity: 0; animation: briefcasePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  .briefcase-card:nth-child(1) { animation-delay: 0.05s; }
+  .briefcase-card:nth-child(2) { animation-delay: 0.13s; }
+  .briefcase-card:nth-child(3) { animation-delay: 0.21s; }
+  .briefcase-card:nth-child(4) { animation-delay: 0.29s; }
+  @keyframes briefcasePop { from { opacity: 0; transform: translateY(16px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+}
+
+.briefcase-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.1), transparent 70%);
+  pointer-events: none;
+}
+
+.briefcase-card:hover {
+  transform: translateY(-12px) scale(1.06);
+  border-color: var(--neon-blue);
+  box-shadow: 0 20px 50px rgba(212, 175, 55, 0.5), inset 0 0 30px rgba(212, 175, 55, 0.25);
+}
+
+.mystery-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 30%, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+  position: relative;
+}
+
+/* Signature element: every unopened briefcase is a vault dial, not a plain
+   question mark. Two counter-rotating rings (a dashed bezel + conic-gradient
+   tick marks) spin slowly at rest and snap into a fast "unlocking" spin on
+   hover, so the core interaction of the game - picking a card - reads as
+   cracking a safe. */
+.mystery-card-wrapper::before,
+.mystery-card-wrapper::after {
+  content: '';
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.mystery-card-wrapper::before {
+  border: 2px dashed rgba(212, 175, 55, 0.4);
+  animation: dialSpin 14s linear infinite;
+}
+.mystery-card-wrapper::after {
+  width: 78px;
+  height: 78px;
+  background: repeating-conic-gradient(rgba(212, 175, 55, 0.55) 0deg 2deg, transparent 2deg 30deg);
+  opacity: 0.55;
+  animation: dialSpin 10s linear infinite reverse;
+}
+.briefcase-card:hover .mystery-card-wrapper::before {
+  animation-duration: 1.4s;
+}
+.briefcase-card:hover .mystery-card-wrapper::after {
+  animation-duration: 1s;
+}
+@keyframes dialSpin {
+  to { transform: rotate(360deg); }
+}
+
+.mystery-badge {
+  font-family: var(--font-nums);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #000;
+  background: var(--gold-gradient);
+  padding: 2px 10px;
+  border-radius: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.peek-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+/* Peek overlay - shown over an unrevealed mystery card when the admin eye
+   or the reveal_cards helper card is active. Covers the card fully so it
+   doesn't have to fight the "?" numeral / SPECIAL CARD badge underneath
+   for space. */
+.peek-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: rgba(5, 15, 11, 0.92);
+  border: 2px dashed var(--accent-purple);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  text-align: center;
+}
+.peek-overlay .peek-rating {
+  font-family: var(--font-nums);
+  font-weight: 900;
+  font-size: 1.8rem;
+  color: var(--gold-primary);
+  line-height: 1;
+}
+.peek-overlay .peek-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.peek-overlay .peek-helper {
+  font-size: 1rem;
+}
+
+.mystery-qmark {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 800;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 10px rgba(212, 175, 55, 0.35));
+  line-height: 1;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+  animation: floatQmark 2s ease-in-out infinite alternate;
+}
+
+@keyframes floatQmark {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-4px) scale(1.05); }
+}
+
+.waiting-notice {
+  width: 100%;
+  background: rgba(89, 213, 200, 0.12);
+  border: 1px solid var(--neon-blue);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.05rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.briefcase-card.disabled-turn {
+  opacity: 0.65;
+  cursor: not-allowed !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: none !important;
+}
+
+.briefcase-card.disabled-turn:hover {
+  transform: none !important;
+}
+
+.briefcase-card.revealed {
+  background: linear-gradient(135deg, rgba(12, 31, 24, 0.9), rgba(20, 51, 43, 0.9));
+  border-color: var(--neon-blue);
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* .revealed is added exactly once per briefcase (unrevealed -> revealed),
+     so the class addition itself is the trigger - no JS retrigger needed
+     here, unlike the mazad player card which reuses one static element. */
+  .briefcase-card.revealed { animation: briefcaseReveal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes briefcaseReveal { from { transform: scale(0.95) rotateY(8deg); } to { transform: scale(1) rotateY(0); } }
+}
+
+/* FIFA Card Style Preview inside revealed briefcase */
+.fifa-card {
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: cardFlip 0.5s ease;
+  /* .helper-tag.inline below is position:absolute - without this, it had no
+     positioned ancestor closer than .decision-panel and floated to the top
+     corner of the whole Deal/No Deal panel (over the buttons) instead of
+     sitting on this small card. */
+  position: relative;
+}
+
+@keyframes cardFlip {
+  0% { transform: rotateY(90deg); opacity: 0; }
+  100% { transform: rotateY(0); opacity: 1; }
+}
+
+.fifa-rating {
+  font-family: var(--font-nums);
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--gold-primary);
+  line-height: 1;
+}
+
+.fifa-name {
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin: 4px 0;
+  text-align: center;
+}
+
+.fifa-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Player ID card - replaces the plain FIFA-style card inside a revealed
+   briefcase. Punch-hole + barcode read as "official card", and the photo
+   slot is a position silhouette (no real player photos exist in the data
+   set to put there). */
+.id-card {
+  width: 100%;
+  height: 100%;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: cardFlip 0.5s ease;
+}
+
+.id-card::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.id-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.id-rating {
+  font-family: var(--font-nums);
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: var(--gold-primary);
+  line-height: 1;
+}
+
+.id-eyebrow {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--neon-green);
+  margin-top: 3px;
+}
+
+.id-photo {
+  width: 100%;
+  height: 44%;
+  margin-top: 6px;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #1c352a, #0a1712);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+}
+
+/* No real player photos exist - a plain athlete silhouette (head + torso)
+   in the photo slot, the standard "no photo on file" convention on real
+   trading cards, instead of one generic emoji for every outfield player. */
+.player-silhouette {
+  position: relative;
+  width: 30px;
+  height: 40px;
+}
+.player-silhouette::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.82);
+}
+.player-silhouette::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 25px;
+  background: rgba(255, 255, 255, 0.82);
+  clip-path: polygon(32% 0%, 68% 0%, 100% 100%, 0% 100%);
+}
+
+.id-skill-badge {
+  margin-top: 3px;
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #2b1e04;
+  background: linear-gradient(135deg, #fcf6ba, #bf953f);
+  border-radius: 6px;
+  padding: 1px 4px;
+}
+
+.id-name {
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-top: 6px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.id-club {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 1px;
+}
+
+.id-barcode {
+  margin-top: auto;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 3px, rgba(255,255,255,0.25) 3px 4px, transparent 4px 6px);
+  opacity: 0.5;
+  border-radius: 2px;
+}
+
+/* Rarity tiers - the card border/tint tells you the rank before you even
+   read the number, same instinct as a real card game's rarity color. */
+.briefcase-card.revealed.tier-bronze { border-color: #a0663f; }
+.briefcase-card.revealed.tier-bronze .id-rating { color: #c98a5e; }
+.briefcase-card.revealed.tier-bronze .id-photo { background: linear-gradient(160deg, #3a2415, #1a0f08); }
+
+.briefcase-card.revealed.tier-silver { border-color: #b7c2c9; }
+.briefcase-card.revealed.tier-silver .id-rating { color: #d7dee2; }
+.briefcase-card.revealed.tier-silver .id-photo { background: linear-gradient(160deg, #33393d, #15181a); }
+
+.briefcase-card.revealed.tier-gold { border-color: var(--gold-primary); }
+.briefcase-card.revealed.tier-gold .id-photo { background: linear-gradient(160deg, #3a2f14, #1c1607); }
+
+.briefcase-card.revealed.tier-icon {
+  border-color: #f2cd5c;
+  box-shadow: 0 0 30px rgba(242, 205, 92, 0.5), inset 0 0 25px rgba(242, 205, 92, 0.15);
+}
+.briefcase-card.revealed.tier-icon .id-photo {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+}
+.briefcase-card.revealed.tier-icon .id-eyebrow { color: #7fd0ff; }
+
+/* Icon-only badge (see HELPER_ICON in app.js) - the id-card already uses
+   both top corners (.id-rating right, .id-eyebrow left, both anchored by
+   .id-card-head's RTL flex-start), so a badge carrying the full card name
+   had nowhere to go without covering one of them. Centered in the gap
+   between the two instead of claiming either corner - small enough
+   (single emoji, no text) to actually fit there at mobile card widths. */
+.helper-tag {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--neon-red);
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(225, 29, 46, 0.6);
+  animation: pulse 1.5s infinite;
+  z-index: 2;
+}
+/* The Deal/No Deal preview card (.fifa-card) has no competing corner
+   content (its rating/name/club are one centered block, not split into
+   corners) - top-right is fine there, same spot the badge used to occupy
+   everywhere before this fix. */
+.helper-tag.inline {
+  top: 6px;
+  left: auto;
+  right: 6px;
+  transform: none;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Decision Panel */
+.decision-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
+  /* Static in-flow content can still sit visually under the fixed PWA
+     install/update banner (z-index 1000) if the page happens to scroll
+     that far - position+z-index here (not just in the mobile media query)
+     makes sure Deal/No Deal always wins on every screen size, not just
+     the ones the mobile fix originally covered. */
+  position: relative;
+  z-index: 1002;
+}
+
+.decision-buttons {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.extra-chance-hint {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(165, 108, 255, 0.15);
+  border: 1px solid var(--accent-purple);
+  color: #c9a8ff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.btn-deal {
+  flex: 1;
+  background: var(--neon-green);
+  color: #000;
+  font-size: 1.1rem;
+}
+
+.btn-no-deal {
+  flex: 1;
+  background: var(--neon-red);
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+/* Missed Cards Reveal Panel */
+.missed-reveal-panel {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--gold-primary);
+  margin-top: 15px;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+
+.missed-reveal-panel h3 { color: var(--gold-primary); margin-bottom: 15px; }
+
+.missed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.missed-card-mini {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+}
+.missed-card-mini .rating { font-family: var(--font-nums); font-weight: 800; color: var(--gold-primary); }
+.missed-card-mini .name { font-size: 0.85rem; font-weight: 700; }
+
+/* Squads Sidebar */
+.squads-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* .draft-layout's grid/flex items default to min-width:auto, which
+     refuses to shrink below content's natural width - at mid-range
+     viewports (between the tablet and full-mobile-stack breakpoints) that
+     forced the whole row wider than the screen, causing horizontal
+     scroll. min-width:0 lets this column actually shrink to fit. */
+  min-width: 0;
+}
+
+.helper-badge { font-size: 0.7rem; background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 10px; color: var(--gold-primary); }
+.helper-badge small { font-size: 0.62rem; opacity: 0.75; }
+/* Opponent's held card - name hidden, only that "they have something" shows */
+.helper-badge-hidden { color: var(--text-muted); font-style: italic; }
+
+/* ========================================= */
+/* Lineup Strip                               */
+/* Replaces the circle-token pitch map - every player is a full-width row
+   (icon + name + rating), guest's XI on top, host's XI below a halfway
+   divider. Row-based means it's structurally impossible for two players
+   to overlap regardless of screen size or how many are drafted (works
+   identically for classic's 4-a-side and full mode's 11-a-side), which a
+   percentage-positioned token map could never fully guarantee. Reused in
+   both the draft view and the match center's "التشكيلة" tab. */
+/* ========================================= */
+.lineup-card { padding: 14px; }
+
+.lineup-strip {
+  position: relative;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.2);
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 40px, transparent 40px 80px),
+    linear-gradient(180deg, #0d2a1c 0%, #081f14 50%, #0d2a1c 100%);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.strip-group { display: flex; flex-direction: column; gap: 6px; }
+.strip-group.guest { margin-bottom: 2px; }
+.strip-head {
+  font-size: 0.76rem; font-weight: 800; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 8px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.strip-head.guest { color: var(--neon-green); }
+.strip-head.host { color: var(--neon-blue); }
+.strip-row {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.035); border-radius: 10px; padding: 7px 11px;
+}
+.strip-row.empty { opacity: 0.55; }
+.strip-row.protect-selectable {
+  cursor: pointer;
+  border: 1.5px solid var(--accent-purple);
+  background: rgba(165, 108, 255, 0.12);
+  animation: protectPulse 1.4s ease-in-out infinite;
+}
+.strip-row.protect-selectable:hover { background: rgba(165, 108, 255, 0.22); }
+@keyframes protectPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(165, 108, 255, 0); }
+  50% { box-shadow: 0 0 10px rgba(165, 108, 255, 0.5); }
+}
+.strip-row.upgrade-selectable {
+  cursor: pointer;
+  border: 1.5px solid #f97316;
+  background: rgba(249, 115, 22, 0.12);
+  animation: upgradePulse 1.4s ease-in-out infinite;
+}
+.strip-row.upgrade-selectable:hover { background: rgba(249, 115, 22, 0.22); }
+@keyframes upgradePulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(249, 115, 22, 0); }
+  50% { box-shadow: 0 0 10px rgba(249, 115, 22, 0.5); }
+}
+/* Steal, step 1: pick your own player to give up */
+.strip-row.steal-my-selectable {
+  cursor: pointer;
+  border: 1.5px solid var(--neon-blue);
+  background: rgba(89, 213, 200, 0.12);
+  animation: stealPulse 1.4s ease-in-out infinite;
+}
+.strip-row.steal-my-selectable:hover { background: rgba(89, 213, 200, 0.22); }
+/* Marks the one already chosen while step 2 (opponent pick) is active */
+.strip-row.steal-my-picked { border: 1.5px solid var(--neon-blue); background: rgba(89, 213, 200, 0.2); }
+/* Steal, step 2: pick the opponent's player to take */
+.strip-row.steal-opp-selectable {
+  cursor: pointer;
+  border: 1.5px solid var(--neon-red);
+  background: rgba(225, 29, 46, 0.12);
+  animation: stealPulse 1.4s ease-in-out infinite;
+}
+.strip-row.steal-opp-selectable:hover { background: rgba(225, 29, 46, 0.22); }
+@keyframes stealPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(89, 213, 200, 0); }
+  50% { box-shadow: 0 0 10px rgba(89, 213, 200, 0.5); }
+}
+.strip-row .pos-chip { font-size: 0.66rem; color: var(--text-muted); width: 52px; flex-shrink: 0; }
+.strip-row .pname {
+  font-size: 0.82rem; font-weight: 700; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.strip-mid-line {
+  display: flex; align-items: center; gap: 8px; margin: 12px 0; color: var(--gold-primary); font-size: 0.65rem; font-weight: 700;
+}
+.strip-mid-line::before, .strip-mid-line::after { content: ''; flex: 1; height: 1px; background: var(--border-glass); }
+
+.rating-badge {
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-nums); font-weight: 800;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  flex-shrink: 0;
+  width: 30px; height: 30px; font-size: 0.78rem;
+}
+.rating-badge.host { background: linear-gradient(145deg,#7fe9de,#1f8f82); color: #04211d; }
+.rating-badge.guest { background: linear-gradient(145deg,#7ee79a,#1f8f4f); color: #06210f; }
+.rating-badge.empty { background: rgba(255,255,255,0.08); color: var(--text-muted); border-style: dashed; }
+
+/* Sound Toggle Button */
+.sound-btn {
+  font-size: 1.2rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-glass);
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.sound-btn:hover { background: rgba(212, 175, 55, 0.2); border-color: var(--gold-primary); }
+
+/* 15s Turn Circular Timer Ring */
+.turn-timer-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.timer-circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 3.8;
+}
+.timer-circle-progress {
+  fill: none;
+  stroke: var(--gold-primary);
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s linear, stroke 0.3s ease;
+}
+.timer-circle-progress.warning { stroke: var(--neon-red); }
+.timer-num {
+  position: absolute;
+  font-family: var(--font-nums);
+  font-weight: 900;
+  font-size: 0.95rem;
+  color: var(--gold-primary);
+}
+
+/* Floating Reaction Emoji Bar */
+.live-emoji-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid var(--border-glass);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+.emoji-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.emoji-btn:active { transform: scale(1.4); }
+
+.emoji-floating-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+.floating-emoji-item {
+  position: absolute;
+  font-size: 2.5rem;
+  animation: floatUp 2.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(100vh) scale(0.5) rotate(0deg); }
+  50% { opacity: 0.9; transform: translateY(50vh) scale(1.2) rotate(15deg); }
+  100% { opacity: 0; transform: translateY(-10vh) scale(1) rotate(-15deg); }
+}
+
+/* 3D Mouse Tilt & Holographic FUT Legend Card Effect */
+.mystery-card-wrapper {
+  transition: transform 0.15s ease-out;
+  transform-style: preserve-3d;
+}
+.briefcase-card:hover .mystery-card-wrapper {
+  transform: perspective(600px) rotateX(8deg) rotateY(-8deg) scale(1.03);
+}
+
+/* Advanced Gradient Animations */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes neonGlow {
+  0%, 100% { text-shadow: 0 0 10px var(--gold-primary), 0 0 20px var(--gold-primary); }
+  50% { text-shadow: 0 0 20px var(--gold-primary), 0 0 30px var(--gold-primary); }
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Apply shimmer to briefcase cards on hover */
+.briefcase-card:hover {
+  animation: shimmer 2s infinite;
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background-size: 1000px 100%;
+}
+
+/* Gold title glow */
+.glow-title .gold-text {
+  animation: neonGlow 2s infinite;
+}
+
+/* Smooth slide in for hero section */
+.hero-card {
+  animation: slideInDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* WhatsApp Share Button */
+.wa-btn {
+  background: rgba(37, 211, 102, 0.2);
+  border: 1px solid #25D366;
+  color: #25D366;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.wa-btn:hover {
+  background: #25D366;
+  color: #000;
+  box-shadow: 0 0 15px rgba(37, 211, 102, 0.5);
+}
+
+/* MVP Award Box */
+.mvp-award-box {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.4) 100%);
+  border: 2px solid var(--gold-primary);
+  border-radius: 16px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+  animation: pulseGlow 2s infinite alternate;
+}
+@keyframes pulseGlow {
+  from { box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+  to { box-shadow: 0 0 25px rgba(212, 175, 55, 0.7); }
+}
+.mvp-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--gold-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Live Simulation Pulse Indicator */
+.live-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--neon-red);
+  border-radius: 50%;
+  margin-left: 6px;
+  box-shadow: 0 0 10px var(--neon-red);
+  animation: livePulse 1.2s infinite ease-in-out;
+}
+@keyframes livePulse {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.4; }
+  100% { transform: scale(0.9); opacity: 1; }
+}
+
+/* App Initial Loading Overlay */
+#app-loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+#app-loading-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+.spinner-ring {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(212, 175, 55, 0.15);
+  border-top-color: var(--gold-primary);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+  margin-bottom: 20px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Confetti Canvas Container */
+#confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* Footer Copyright Styling */
+.app-footer {
+  text-align: center;
+  padding: 20px 0 15px 0;
+  margin-top: auto;
+  border-top: 1px solid var(--border-glass);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.app-footer strong {
+  color: var(--gold-primary);
+}
+
+/* ==========================================================================
+   MATCH CENTER — single persistent screen (live AND full-time, no popup),
+   tabbed like a real broadcast app: الملخص / الأحداث / الإحصائيات / التشكيلة.
+   Replaces the old ticker-screen + separate result-modal popup pair.
+   ========================================================================== */
+
+.match-center-card {
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mc-header { padding: 16px 18px 12px; text-align: center; }
+.mc-status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(225, 29, 46, 0.15); border: 1px solid var(--neon-red); color: #ff5468;
+  font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px;
+}
+.mc-status-pill.ft { background: rgba(212, 175, 55, 0.15); border-color: var(--gold-primary); color: var(--gold-primary); }
+.mc-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff3b52; animation: mcPulse 1.4s infinite; }
+.mc-status-pill.ft .mc-live-dot { display: none; }
+@keyframes mcPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+.mc-teams { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.mc-team { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 30%; min-width: 0; }
+.mc-badge {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+.mc-badge.host { background: linear-gradient(135deg, #7fe9de, #1f8f82); border: 2px solid var(--neon-blue); }
+.mc-badge.guest { background: linear-gradient(135deg, #7ee79a, #1f8f4f); border: 2px solid var(--neon-green); }
+.mc-team-name {
+  font-size: 0.8rem; font-weight: 800; text-align: center;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mc-score {
+  font-family: var(--font-nums);
+  font-variant-numeric: tabular-nums;
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--gold-primary);
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+  line-height: 1;
+  white-space: nowrap;
+  /* Two digits separated only by a colon (no strong RTL text between them)
+     is exactly the pattern the Unicode Bidi Algorithm mis-orders inside an
+     RTL document - the score visually swapped sides from what the DOM/data
+     actually said. Force LTR so digit order is always literal DOM order,
+     matched with the guest-first/host-last markup order above. */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.mc-colon { color: var(--text-muted); margin: 0 4px; }
+.mc-minute { font-size: 0.75rem; color: var(--muted, var(--text-muted)); margin-top: 8px; font-family: var(--font-nums); }
+
+.mc-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-glass);
+  padding: 0 8px;
+}
+.mc-tab {
+  flex: 1;
+  background: none; border: none;
+  color: var(--text-muted);
+  font-family: var(--font-arabic);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 10px 4px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.mc-tab.active { color: var(--gold-primary); border-bottom-color: var(--gold-primary); }
+.mc-tab-panel { padding: 16px; min-height: 200px; }
+.mc-tab-panel.hidden { display: none; }
+
+/* Steal Action Panel */
+.steal-panel {
+  background: rgba(165, 108, 255, 0.15);
+  border: 1px solid var(--accent-purple);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.steal-alert {
+  font-weight: 700;
+  color: #c9a8ff;
+}
+.steal-inputs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.steal-inputs select {
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: 1px solid var(--border-glass);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: var(--font-arabic);
+  font-weight: 600;
+}
+.swap-icon { font-size: 1.2rem; }
+.steal-timer { font-size: 0.85rem; color: var(--text-muted); }
+
+/* ==========================================================================
+   EVENTS TAB — Yalla-Shoot-style center spine timeline: a vertical line
+   down the middle, host events branch right, guest events branch left.
+   ========================================================================== */
+.spine-wrap {
+  position: relative;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.spine-wrap::-webkit-scrollbar { width: 6px; }
+.spine-wrap::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 4px; }
+.spine-line {
+  position: absolute; right: 50%; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(180deg, transparent, var(--border-glass) 6%, var(--border-glass) 94%, transparent);
+  transform: translateX(1px);
+}
+.spine-evt { position: relative; display: flex; align-items: center; margin-bottom: 20px; min-height: 36px; }
+.spine-evt:last-child { margin-bottom: 4px; }
+.spine-chip {
+  position: absolute; right: 50%; transform: translateX(50%);
+  width: 32px; height: 32px; border-radius: 50%; z-index: 2;
+  background: var(--bg-dark); border: 2px solid var(--gold-primary);
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+}
+.spine-min {
+  position: absolute; right: 50%; transform: translateX(calc(50% + 27px));
+  top: -14px; font-family: var(--font-nums); font-weight: 800; color: var(--gold-primary); font-size: 0.65rem;
+}
+.spine-card {
+  width: calc(50% - 28px);
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 10px;
+  padding: 7px 11px;
+}
+.spine-evt.host .spine-card { margin-right: calc(50% + 28px); text-align: right; border-right: 3px solid var(--neon-blue); }
+.spine-evt.guest .spine-card { margin-left: calc(50% + 28px); text-align: left; border-left: 3px solid var(--neon-green); }
+.spine-evt.center { justify-content: center; }
+.spine-evt.center .spine-card { width: auto; max-width: 70%; margin: 0 auto; text-align: center; border: 1px solid var(--border-glass); }
+.spine-pname { font-size: 0.8rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spine-pcap { font-size: 0.68rem; color: var(--text-muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ==========================================================================
+   SUMMARY TAB — trophy / winner / MVP / stats mini + save+rematch buttons.
+   Lives inline in the tab panel now, not a fixed-position popup - removes
+   the whole backdrop-filter/z-index modal-trap class of bugs entirely.
+   ========================================================================== */
+.summary-pending { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 30px 10px; }
+.trophy-anim {
+  font-size: 3rem;
+  display: block;
+  text-align: center;
+  margin-bottom: 6px;
+  animation: trophyBounce 2s infinite ease-in-out;
+}
+@keyframes trophyBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-8px) rotate(5deg) scale(1.08); }
+}
+#winner-title { font-size: 1.3rem; font-weight: 900; text-align: center; margin-bottom: 4px; }
+#winner-sub-msg { font-size: 0.82rem; color: var(--text-muted); text-align: center; margin-bottom: 14px; }
+.final-score-badge {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 16px;
+  font-family: var(--font-nums);
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--gold-primary);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 6px 28px;
+  border-radius: 16px;
+  letter-spacing: 3px;
+  /* Same RTL bidi mis-order risk as .mc-score - "6 - 0" (JS builds it as
+     hostGoals - guestGoals) must render in that literal left-to-right
+     order, not get silently flipped to "0 - 6". */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.mvp-section {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.08));
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+.mvp-title { color: var(--gold-primary); font-weight: 800; font-size: 0.85rem; }
+.mvp-name { font-weight: 800; font-size: 0.95rem; color: #fff; }
+
+.stats-table {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+.stat-val-host { font-family: var(--font-nums); font-weight: 900; font-size: 1.05rem; color: var(--neon-blue); width: 42px; text-align: right; }
+.stat-val-guest { font-family: var(--font-nums); font-weight: 900; font-size: 1.05rem; color: var(--neon-green); width: 42px; text-align: left; }
+.stat-label-text { color: var(--text-muted); font-size: 0.82rem; font-weight: 700; }
+.stat-bar-container { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; display: flex; margin-top: 4px; }
+.stat-bar-host { height: 100%; background: var(--neon-blue); transition: width 0.6s ease; }
+.stat-bar-guest { height: 100%; background: var(--neon-green); transition: width 0.6s ease; }
+
+/* User Profile Badge */
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 14px 6px 6px;
+  border-radius: 20px;
+  border: 1px solid var(--border-glass);
+}
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-primary);
+  object-fit: cover;
+}
+
+/* Profile settings modal - rate-limit hint text + badges grid */
+.field-hint {
+  font-size: 0.76rem;
+  color: var(--live-red, #ff2d55);
+  margin-top: 4px;
+  min-height: 1em;
+}
+.profile-badges-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.profile-badge-chip {
+  background: var(--gold-soft, rgba(212, 175, 55, 0.14));
+  border: 1px solid var(--border-glass);
+  color: var(--gold-primary);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.user-info-col {
+  display: flex;
+  flex-direction: column;
+}
+.user-display-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #fff;
+  line-height: 1.2;
+}
+.user-record {
+  font-family: var(--font-nums);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--neon-green);
+}
+
+/* Install & Update Banners */
+.install-banner, .update-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(6, 15, 12, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--gold-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 20px;
+  z-index: 1000;
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+  animation: slideUp 0.4s ease;
+}
+
+/* Buttons under a blurred .glass-card (hero card, draft stage, simulation
+   card, ...) keep turning up physically covered by this banner - each
+   ancestor's backdrop-filter traps it in a separate stacking context so no
+   z-index fix on the button side reaches far enough, and it keeps
+   recurring in a new spot every time. Reserve real space at the bottom of
+   the page instead of fighting stacking contexts: whichever banner is
+   visible pushes the page content up so nothing ever renders underneath it
+   in the first place, regardless of ancestor blur. */
+body:has(#pwa-install-banner:not(.hidden)),
+body:has(#sw-update-banner:not(.hidden)) {
+  padding-bottom: 76px;
+}
+.install-banner span, .update-banner span {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Leaderboard Styles */
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px;
+}
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.05);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.2s;
+}
+.leaderboard-item:hover {
+  transform: translateX(-5px);
+  background: rgba(255,255,255,0.1);
+}
+.leaderboard-item.rank-first {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+.leaderboard-item.rank-second {
+  background: rgba(192, 192, 192, 0.15);
+  border-color: rgba(192, 192, 192, 0.5);
+}
+.leaderboard-item.rank-third {
+  background: rgba(205, 127, 50, 0.15);
+  border-color: rgba(205, 127, 50, 0.5);
+}
+.lb-rank {
+  font-size: 1.5rem;
+  font-weight: 900;
+  width: 40px;
+  text-align: center;
+}
+.lb-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.lb-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.lb-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+.lb-stats {
+  text-align: left;
+}
+.lb-wins {
+  font-family: var(--font-nums);
+  color: var(--neon-green);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 30px;
+}
+.loader-spinner {
+  text-align: center;
+  color: var(--gold-primary);
+  padding: 20px;
+  font-weight: bold;
+}
+
+/* ========================================= */
+/* Responsive Design (Mobile & Tablets)      */
+/* ========================================= */
+@media screen and (max-width: 900px) {
+  /* Draft Stage specifically for tablets */
+  .draft-layout {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  body { padding: 8px; }
+
+  /* Global Container */
+  .app-container {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  /* Top Navigation */
+  .top-nav {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .game-logo { font-size: 1.1rem; }
+
+  .room-info-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+
+  /* Turn Status Bar: stack instead of squeezing the position-badge/turn-desc
+     text into a single narrow flex column next to players-vs. */
+  .turn-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .round-indicator {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .turn-desc { margin-right: 0; }
+
+  .players-vs { align-self: center; }
+
+  /* Lobby Split Actions */
+  .actions-split {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .action-box {
+    width: 100%;
+  }
+
+  /* Draft Stage */
+  .draft-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Central Draft Grid */
+  .draft-stage {
+    min-height: auto;
+    padding: 15px;
+  }
+
+  .briefcases-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .briefcase-card {
+    height: 150px;
+    padding: 12px;
+  }
+
+  .mystery-qmark {
+    font-size: 2.5rem;
+  }
+
+  .mystery-badge {
+    font-size: 0.65rem;
+  }
+
+  .fifa-card .fifa-rating { font-size: 1.6rem; }
+  .fifa-card .fifa-name { font-size: 0.95rem; }
+
+  /* Lineup strip rows already flow naturally (no fixed aspect-ratio box to
+     fight), just tighten the row padding so full mode's 12 rows don't eat
+     the whole screen height on a short phone. */
+  .strip-row { padding: 6px 9px; }
+  .rating-badge { width: 26px; height: 26px; font-size: 0.7rem; }
+
+  .mc-badge { width: 44px; height: 44px; font-size: 1.3rem; }
+  .mc-score { font-size: 2rem; }
+
+  .modal-content {
+    width: 95%;
+    padding: 20px 15px;
+  }
+
+  /* .draft-stage.glass-card uses backdrop-filter, which creates a new
+     containing block per spec and silently turns decision-panel's
+     "position: fixed" below into "positioned relative to that blurred card"
+     instead of the viewport. Drop the filter on this one container on
+     mobile so the fixed bottom bar actually pins to the screen. */
+  .draft-stage {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Fixed bottom controls for thumb reach. z-index above the PWA
+     install/update banners (z-index 1000) - those are also fixed to the
+     bottom and were silently swallowing clicks on Deal/No Deal whenever
+     the install prompt was showing, since gameplay controls must win over
+     a promotional banner. */
+  .decision-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(6, 15, 12, 0.95);
+    backdrop-filter: blur(15px);
+    border-top: 2px solid var(--gold-primary);
+    padding: 14px 16px;
+    z-index: 1001;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8);
+    max-width: 100%;
+  }
+  .decision-buttons { flex-direction: row; gap: 10px; }
+}
+
+@media screen and (max-width: 480px) {
+  /* Ultra-small phones */
+  .game-logo {
+    font-size: 1.2rem;
+  }
+
+  .rating-badge { width: 24px; height: 24px; font-size: 0.66rem; }
+  .strip-row .pos-chip { width: 42px; font-size: 0.6rem; }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 12px;
+  }
+}
+
+/* Goal Flash Animation */
+.flash-goal {
+  animation: flashGoal 1.5s ease-out;
+}
+@keyframes flashGoal {
+  0% { box-shadow: inset 0 0 100px var(--neon-green); }
+  50% { box-shadow: inset 0 0 150px var(--neon-green); background-color: rgba(60, 203, 111, 0.2); }
+  100% { box-shadow: inset 0 0 0px transparent; }
+}
+
+/* ========================================= */
+/* Live Chat Drawer                          */
+/* ========================================= */
+.chat-unread-dot {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--neon-red);
+  box-shadow: 0 0 6px var(--neon-red);
+}
+#btn-toggle-chat { position: relative; }
+
+.chat-panel {
+  position: fixed;
+  bottom: 0;
+  left: 20px;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  max-height: 60vh;
+  background: rgba(6, 15, 12, 0.96);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--border-glass);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 160px;
+  max-height: 320px;
+}
+
+.chat-msg {
+  max-width: 85%;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  background: rgba(255, 255, 255, 0.06);
+  align-self: flex-start;
+}
+.chat-msg.mine {
+  align-self: flex-end;
+  background: rgba(212, 175, 55, 0.18);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+.chat-msg .chat-sender {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  margin-bottom: 2px;
+}
+
+.chat-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-glass);
+}
+.chat-form input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 8px 14px;
+  color: var(--text-main);
+  font-family: var(--font-arabic);
+}
+.chat-send-btn {
+  background: var(--gold-gradient);
+  color: #10170c;
+}
+
+#btn-toggle-mic.mic-active {
+  background: var(--neon-red);
+  box-shadow: 0 0 15px var(--neon-red);
+}
+
+/* Voice call volume - a real, always-visible control (not buried in
+   settings) so you can actually hear/adjust the other player mid-match. */
+.voice-volume-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--neon-red);
+  border-radius: 14px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.voice-volume-row span:first-child { white-space: nowrap; }
+.voice-volume-row input[type="range"] {
+  flex: 1;
+  height: 24px;
+  accent-color: var(--neon-red);
+  cursor: pointer;
+}
+#voice-volume-label {
+  min-width: 42px;
+  text-align: left;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phone landscape (short viewport height, not just narrow width) - the
+   portrait-tuned rules above stack everything vertically and eat the
+   little vertical room a landscape phone has. Go wide instead: draft stage
+   and squads side by side, and let the decision panel flow in place rather
+   than pinning a chunk of the short screen permanently. */
+@media (max-width: 926px) and (max-height: 500px) and (orientation: landscape) {
+  .app-container { padding: 6px; gap: 8px; }
+  .top-nav { flex-direction: row; padding: 8px 14px; }
+  .turn-bar { flex-direction: row; padding: 8px 14px; }
+  .draft-layout { flex-direction: row; gap: 12px; }
+  .draft-stage { padding: 10px; min-height: auto; }
+  .squads-sidebar { width: 260px; flex-shrink: 0; }
+  /* Row-based lineup strip has no percentage-position collision risk at
+     any width (unlike the old circle-token pitch map it replaced) - a
+     narrow landscape column just makes rows narrower, text ellipsizes.
+     Only needs a height cap + scroll so full mode's 12 rows don't push
+     the column taller than the viewport. */
+  .lineup-strip { max-height: 44vh; overflow-y: auto; padding: 10px 8px; }
+  .strip-row { padding: 5px 8px; gap: 7px; }
+  .rating-badge { width: 22px; height: 22px; font-size: 0.6rem; }
+  .strip-row .pos-chip { width: 38px; font-size: 0.58rem; }
+  .briefcases-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .briefcase-card { height: 110px; padding: 8px; }
+  .mystery-qmark { font-size: 1.6rem; }
+  .decision-panel {
+    position: static;
+    width: auto;
+    box-shadow: none;
+    border-radius: 14px;
+    background: rgba(6, 15, 12, 0.7);
+  }
+  .chat-panel { max-height: 80vh; }
+}
+
+@media (max-width: 480px) {
+  .chat-panel {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* Badge system: Locked badge chips and unlock notification */
+.profile-badge-chip.locked {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px dashed rgba(212, 175, 55, 0.25) !important;
+  color: var(--text-muted) !important;
+  filter: grayscale(1);
+  opacity: 0.65;
+  cursor: help;
+}
+.profile-badge-chip.locked::after {
+  content: " 🔒";
+  font-size: 0.7rem;
+}
+.badge-unlock-popup {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translate(-50%, 100px);
+  background: rgba(11, 26, 20, 0.95);
+  border: 2.5px solid var(--gold, #d4af37);
+  border-radius: 16px;
+  padding: 20px 30px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.95), 0 0 25px rgba(212, 175, 55, 0.4);
+  z-index: 999999;
+  text-align: center;
+  direction: rtl;
+  width: 90%;
+  max-width: 400px;
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+  font-family: 'Cairo', sans-serif;
+  animation: borderGlow 2s infinite alternate;
+}
+@keyframes borderGlow {
+  from { border-color: #d4af37; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.95), 0 0 15px rgba(212, 175, 55, 0.3); }
+  to { border-color: #ff2d55; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.95), 0 0 35px rgba(255, 45, 85, 0.5); }
+}
+@keyframes bounceBadge {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-10px); }
+}
+

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المزاد ⚽🔨 — لعبة مزايدة اللاعبين</title>
+
+  <meta name="description" content="لعبة مزاد كرة قدم: ميزانية ثابتة، ولاعبين نجوم يطلعوا للمزايدة الحية بينك وبين خصمك.">
+  <meta property="og:title" content="المزاد ⚽🔨">
+  <meta property="og:description" content="زايد على أفضل اللاعبين بميزانيتك، وواجه خصمك في مباراة مباشرة بعد ما تكتمل التشكيلتين.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Baloo+Bhaijaan+2:wght@600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/png" href="/dond_app_icon.png">
+  <link rel="apple-touch-icon" href="/dond_app_icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#071410">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="المزاد">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/mazad/css/mazad.css">
+</head>
+<body>
+
+  <div id="app-loading-screen">
+    <div class="spinner-ring"></div>
+    <h3 style="color: var(--gold-primary); font-family: var(--font-arabic); font-weight: 800;">جاري فتح المزاد... 🔨</h3>
+  </div>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="stadium-bg"></div>
+  <div class="light-beam beam-left"></div>
+  <div class="light-beam beam-right"></div>
+
+  <div id="app" class="app-container">
+
+    <header class="top-nav glass-card">
+      <div class="nav-brand">
+        <h1 class="game-logo">المزاد <span class="gold-text">🔨</span></h1>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="/" class="btn-icon back-to-hub-btn" title="العودة لمركز الألعاب">✕</a>
+        <button id="btn-leave-room" class="btn-icon hidden" title="الخروج من الغرفة والعودة للقائمة الرئيسية">🚪</button>
+        <button id="btn-toggle-chat" class="btn-icon hidden" title="الشات">💬<span id="chat-unread-dot" class="chat-unread-dot hidden"></span></button>
+        <button id="btn-sound-toggle" class="btn-icon sound-btn" title="كتم/تشغيل الصوت">🔊</button>
+      </div>
+
+      <!-- User Profile Badge - same shared Auth/UserProfileManager as /deal/,
+           just a separate instance per page load (each game's own script
+           tags load auth.js/user-profile.js independently). -->
+      <div id="user-profile-badge" class="user-profile-badge hidden">
+        <img class="user-avatar" src="/dond_app_icon.png" alt="">
+        <div class="user-info-col">
+          <span class="user-display-name"></span>
+          <span id="user-record-display" class="user-record">فوز: 0 | خسارة: 0</span>
+        </div>
+        <button id="btn-open-profile" class="btn-icon" title="تعديل البروفايل">✏️</button>
+      </div>
+
+      <div id="room-info-bar" class="room-info-bar hidden">
+        <div class="info-badge">
+          <span class="label">رقم الغرفة:</span>
+          <span id="display-room-id" class="value room-code">----</span>
+          <button id="btn-copy-code" class="btn-icon" title="نسخ الكود">📋</button>
+          <button id="btn-copy-invite-link" class="btn-icon" title="نسخ رابط الدعوة">🔗</button>
+        </div>
+        <div class="info-badge">
+          <span class="label">دورك:</span>
+          <span id="user-role-badge" class="role-pill">...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- LIVE TEXT CHAT DRAWER (host/guest only, hidden in lobby) -->
+    <div id="chat-panel" class="chat-panel hidden">
+      <div class="chat-panel-header">
+        <span>💬 شات المزاد</span>
+        <button id="btn-close-chat" class="btn-icon close-modal">✕</button>
+      </div>
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" class="chat-form">
+        <input type="text" id="chat-input" placeholder="اكتب رسالة..." maxlength="200" autocomplete="off">
+        <button type="submit" class="btn-icon chat-send-btn" title="إرسال">➤</button>
+      </form>
+    </div>
+
+    <div id="notification-banner" class="notification-banner hidden"></div>
+    <div id="spectator-banner" class="spectator-banner hidden">
+      <span>👁️ أنت تتابع هذا المزاد حالياً بصفة (مراقب).</span>
+    </div>
+
+    <main class="views-wrapper">
+
+      <!-- VIEW 1: LOBBY -->
+      <section id="view-lobby" class="view-section active">
+        <div class="hero-card glass-card">
+          <div class="hero-header">
+            <div class="live-pill" style="margin-bottom: 14px;">المزاد مفتوح</div>
+            <h1 class="glow-title">لعبة <span class="gold-text">المزاد</span> 🔨</h1>
+            <p class="subtitle">كل واحد معاه ميزانية ثابتة، وتزايدوا على لاعبين تقييمهم 90+. اللي يكسب الجولة يتخصم منه المبلغ وياخد لاعب بونص مجاني كمان!</p>
+          </div>
+
+          <div class="form-container">
+            <div class="input-group">
+              <label for="player-name-input">اسمك في اللعبة <span class="required-star" style="color:var(--neon-red); font-weight:bold;">*</span> (3 حروف على الأقل):</label>
+              <input type="text" id="player-name-input" placeholder="أدخل اسمك هنا" minlength="3" maxlength="15" autocomplete="off" required>
+            </div>
+
+            <button type="button" id="btn-toggle-rules" class="collapse-toggle" style="margin-bottom: 18px;">
+              <span>📜 كيف تلعب؟</span>
+              <span class="chev">▾</span>
+            </button>
+            <div id="rules-collapse-body" class="collapse-body">
+              <ul style="padding-right: 20px; color: var(--text-muted); font-size: 0.86rem; line-height: 1.9;">
+                <li>كل جولة يطلع لاعب تقييمه 90+ للمزايدة، وأنت وخصمك بترفعوا السعر بالتبادل</li>
+                <li>لو انسحبت، الطرف التاني ياخد اللاعب ويتخصم منه سعر آخر مزايدة</li>
+                <li>الفايز بالجولة كمان بياخد لاعب بونص مجاني (90+) في نفس المركز</li>
+                <li>الخسران بياخد لاعب تعويض مجاني (85+) في نفس المركز</li>
+                <li>لما التشكيلتين يكملوا، مباراة مباشرة 10 ثواني لحسم الفائز!</li>
+              </ul>
+            </div>
+
+            <div id="lobby-stage-2" class="hidden">
+              <div class="input-group squad-mode-group">
+                <label>نظام المزاد:</label>
+                <div class="squad-mode-toggle">
+                  <label class="squad-mode-option">
+                    <input type="radio" name="squad-mode" id="mode-classic" value="classic" checked>
+                    <span>⚡ سريع (4 لاعبين + مدرب — ميزانية 250M)</span>
+                  </label>
+                  <label class="squad-mode-option">
+                    <input type="radio" name="squad-mode" id="mode-full" value="full">
+                    <span>🏟️ كامل (11 لاعب + مدرب — ميزانية 1B)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Optional Google/phone/guest sign-in - same shared Auth
+                   flow as /deal/, only shown once real Firebase Auth keys
+                   are live (see /js/firebase-engine.js FIREBASE_AUTH_ENABLED). -->
+              <div class="auth-signed-out hidden">
+                <button id="btn-google-login" class="btn btn-primary gold-btn full-btn" style="margin-bottom: 10px; padding: 15px; font-size: 1.15rem;">
+                  <span style="background: white; padding: 2px 4px; border-radius: 4px; margin-left: 8px;">G</span>
+                  تسجيل الدخول بحساب Google
+                </button>
+                <button id="btn-guest-login" class="btn btn-secondary full-btn" style="margin-bottom: 20px; padding: 12px; font-size: 1.05rem;">
+                  👤 الدخول كضيف (بدون حساب)
+                </button>
+
+                <div class="divider-text">أو</div>
+                <div id="phone-auth-step1">
+                  <div class="input-group">
+                    <input type="tel" id="phone-number-input" placeholder="رقم تليفونك (مثال: +201234567890)" style="margin-bottom: 8px;">
+                  </div>
+                  <button id="btn-send-phone-code" class="btn btn-secondary full-btn" style="margin-bottom: 10px;">
+                    📱 تسجيل الدخول برقم التليفون
+                  </button>
+                  <div id="recaptcha-container"></div>
+                </div>
+                <div id="phone-auth-step2" class="hidden">
+                  <div class="input-group">
+                    <input type="text" id="phone-code-input" placeholder="اكتب الكود اللي جالك بالرسالة" style="margin-bottom: 8px;">
+                  </div>
+                  <button id="btn-verify-phone-code" class="btn btn-primary gold-btn full-btn" style="margin-bottom: 20px;">
+                    ✅ تأكيد الكود
+                  </button>
+                </div>
+
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">* سجل دخولك لحفظ بياناتك وإحصائياتك في اللعبة</p>
+              </div>
+              <div class="auth-signed-in hidden">
+                <div style="text-align: left; margin-bottom: 20px;">
+                  <button id="btn-logout" class="btn-icon" style="font-size: 0.85rem; color: var(--neon-red); text-decoration: underline;">تسجيل خروج</button>
+                </div>
+              </div>
+
+              <div class="ai-btn-wrapper">
+                <button id="btn-play-ai" class="btn btn-ai full-btn">
+                  🤖 لعب فردي مباشر ضد البوت الذكي (vs AI)
+                </button>
+              </div>
+
+              <button id="btn-leaderboard" class="btn btn-secondary full-btn hidden" style="margin-bottom: 15px;">
+                🏆 قائمة المتصدرين (Leaderboard)
+              </button>
+
+              <div class="actions-split">
+                <div class="action-box">
+                  <div class="action-header">
+                    <span class="action-icon">👑</span>
+                    <div>
+                      <h3>1. إنشاء مزاد جديد</h3>
+                      <p>أنشئ الغرفة واستلم الكود لمشاركته</p>
+                    </div>
+                  </div>
+                  <div class="input-stack">
+                    <input type="text" id="create-room-id" class="stylish-input" placeholder="كود الغرفة (اختياري)" maxlength="6">
+                    <button id="btn-create-room" class="btn btn-primary gold-btn full-btn">👑 إنشاء المزاد كـ مستضيف</button>
+                  </div>
+                </div>
+
+                <div class="divider-text">أو</div>
+
+                <div class="action-box">
+                  <div class="action-header">
+                    <span class="action-icon">🔨</span>
+                    <div>
+                      <h3>2. الانضمام لمزاد صديقك</h3>
+                      <p>أدخل كود الغرفة للانضمام فوراً</p>
+                    </div>
+                  </div>
+                  <div class="input-stack">
+                    <input type="text" id="join-room-id" class="stylish-input" placeholder="أدخل كود الغرفة هنا" maxlength="6">
+                    <button id="btn-join-room" class="btn btn-secondary full-btn">🔨 الانضمام كـ ضيف</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE SETTINGS MODAL - identical markup to /deal/, wired by the
+           same shared /js/profile-settings.js. -->
+      <div id="profile-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-card">
+          <div class="modal-header">
+            <h2 class="glow-title">👤 البروفايل بتاعك</h2>
+            <button id="btn-close-profile" class="btn-icon close-modal">✕</button>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <img id="profile-avatar-preview" class="user-avatar" style="width:80px;height:80px;margin-bottom:10px;" src="/dond_app_icon.png" alt="">
+            <div class="input-group">
+              <label for="profile-name-input">اسمك:</label>
+              <input type="text" id="profile-name-input" maxlength="24" autocomplete="off">
+              <div id="profile-name-hint" class="field-hint"></div>
+              <button id="btn-save-name" class="btn btn-secondary" style="margin-top:6px;">💾 حفظ الاسم</button>
+            </div>
+            <div class="input-group" style="margin-top:16px;">
+              <label for="profile-photo-file">الصورة (رفع ملف):</label>
+              <input type="file" id="profile-photo-file" accept="image/*">
+              <div id="profile-photo-hint" class="field-hint"></div>
+            </div>
+            <div class="input-group" style="margin-top:16px;">
+              <label for="profile-bio-input">وصف حسابك (بايو):</label>
+              <textarea id="profile-bio-input" maxlength="140" rows="3" style="width:100%; resize:none;"></textarea>
+              <button id="btn-save-bio" class="btn btn-secondary" style="margin-top:6px;">💾 حفظ الوصف</button>
+            </div>
+            <div class="input-group" style="margin-top:16px;">
+              <label>البادجات بتاعتك:</label>
+              <div id="profile-badges-list" class="profile-badges-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD MODAL - same 4-category tabs as /deal/'s, wired by
+           the same shared /js/leaderboard.js. -->
+      <div id="leaderboard-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-card">
+          <div class="modal-header">
+            <h2 class="glow-title">🏆 قائمة المتصدرين</h2>
+            <button id="btn-close-leaderboard" class="btn-icon close-modal">✕</button>
+          </div>
+          <div class="lb-tabs" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: -10px; margin-bottom: 15px;">
+            <button id="lb-tab-dond-classic" class="btn-secondary" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; opacity: 0.5;">⚡ صفقة سريع</button>
+            <button id="lb-tab-dond-full" class="btn-secondary" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; opacity: 0.5;">🏟️ صفقة كامل</button>
+            <button id="lb-tab-mazad-classic" class="btn-secondary active" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem;">🔨 مزاد سريع</button>
+            <button id="lb-tab-mazad-full" class="btn-secondary" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; opacity: 0.5;">🔨 مزاد كامل</button>
+          </div>
+          <div class="modal-body">
+            <div id="leaderboard-list" class="leaderboard-list">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: AUCTION ROOM -->
+      <section id="view-auction" class="view-section hidden">
+        <div class="auction-layout">
+
+          <div class="budget-row">
+            <div class="budget-box host">
+              <span class="budget-name" id="auc-host-name">المستضيف</span>
+              <div class="budget-bar"><div id="auc-host-budget-fill" class="budget-fill host"></div></div>
+              <span class="budget-value" id="auc-host-budget-text">0 / 0</span>
+            </div>
+            <div class="budget-box guest">
+              <span class="budget-name" id="auc-guest-name">الضيف</span>
+              <div class="budget-bar"><div id="auc-guest-budget-fill" class="budget-fill guest"></div></div>
+              <span class="budget-value" id="auc-guest-budget-text">0 / 0</span>
+            </div>
+          </div>
+
+          <div id="auc-waiting-guest" class="glass-card auction-block hidden">
+            <p class="subtitle">في انتظار انضمام طرف تاني للمزاد...</p>
+          </div>
+
+          <div id="auc-round-result" class="glass-card round-result-banner hidden"></div>
+
+          <div id="auc-bidding-block" class="glass-card auction-block hidden">
+            <div class="auc-block-header">
+              <span id="auc-round-label" class="auc-round-label">الجولة 1 — حارس مرمى 🧤</span>
+              <button id="btn-admin-reveal-mazad" class="btn-icon hidden" title="كشف لاعب البونص والتعويض (أدمن)">👁️</button>
+              <span id="auc-turn-pill" class="auc-turn-pill">دورك</span>
+            </div>
+
+            <div class="auc-player-card" id="auc-player-card">
+              <div class="auc-player-rating" id="auc-player-rating">90</div>
+              <div class="auc-player-info">
+                <div class="auc-player-name" id="auc-player-name">---</div>
+                <div class="auc-player-meta" id="auc-player-meta">---</div>
+              </div>
+            </div>
+
+            <div id="auc-admin-peek" class="auc-admin-peek hidden">
+              <div class="auc-peek-row"><span>🎁 بونص لو كسبت:</span><b id="auc-peek-bonus">---</b></div>
+              <div class="auc-peek-row"><span>🤝 تعويض لو خسرت:</span><b id="auc-peek-consolation">---</b></div>
+            </div>
+
+            <div class="auc-bid-status">
+              <span>أعلى سعر حالياً:</span>
+              <span id="auc-current-bid" class="auc-current-bid">0</span>
+              <span id="auc-current-bidder" class="auc-current-bidder"></span>
+            </div>
+
+            <div class="auc-bid-controls">
+              <input type="number" id="auc-bid-input" class="stylish-input" placeholder="اكتب المبلغ" step="1000000" min="0">
+              <button id="btn-place-bid" class="btn btn-primary gold-btn">🔨 زايد</button>
+              <button id="btn-pass-bid" class="btn btn-secondary">🚫 انسحب</button>
+            </div>
+            <div class="auc-hint" id="auc-min-hint"></div>
+          </div>
+
+          <button type="button" id="btn-toggle-auc-lineup" class="collapse-toggle">
+            <span>التشكيلتين حتى الآن</span>
+            <span class="chev">▾</span>
+          </button>
+          <div id="auc-lineup-collapse-body" class="collapse-body">
+            <div class="lineup-strip" id="mc-lineup-strip"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 3: MATCH SIMULATION (reused verbatim from Deal or No Deal - same IDs) -->
+      <section id="view-simulation" class="view-section hidden">
+        <div class="match-center-card glass-card">
+
+          <div class="mc-header">
+            <div class="mc-status-pill" id="mc-status-pill">
+              <span class="mc-live-dot"></span>
+              <span id="mc-status-text">مباشر LIVE</span>
+            </div>
+            <div class="mc-teams">
+              <div class="mc-team host">
+                <div class="mc-badge host">👑</div>
+                <span id="sim-host-name" class="mc-team-name">المستضيف</span>
+              </div>
+              <div class="mc-score">
+                <span id="sim-guest-score">0</span><span class="mc-colon">:</span><span id="sim-host-score">0</span>
+              </div>
+              <div class="mc-team guest">
+                <div class="mc-badge guest">⚽</div>
+                <span id="sim-guest-name" class="mc-team-name">الضيف</span>
+              </div>
+            </div>
+            <div class="mc-minute"><span id="sim-clock">00'</span></div>
+          </div>
+
+          <div class="mc-tabs">
+            <button class="mc-tab" data-tab="summary">الملخص</button>
+            <button class="mc-tab active" data-tab="events">الأحداث</button>
+            <button class="mc-tab" data-tab="stats">الإحصائيات</button>
+            <button class="mc-tab" data-tab="lineup">التشكيلة</button>
+          </div>
+
+          <div class="mc-tab-panel hidden" id="mc-panel-summary">
+            <div id="mc-summary-pending" class="summary-pending">⚽ المباراة لسه شغالة... الملخص هيظهر هنا فور ما تنتهي.</div>
+            <div id="mc-summary-content" class="hidden">
+              <span class="trophy-anim">🏆</span>
+              <h2 id="winner-title" class="gold-text">الفائز بالمباراة!</h2>
+              <div id="final-score-display" class="final-score-badge">0 - 0</div>
+              <p id="winner-sub-msg">تهانينا على الفوز!</p>
+              <div class="mvp-section">
+                <span class="mvp-title">🌟 أفضل لاعب في المباراة:</span>
+                <span id="mvp-player-name" class="mvp-name">---</span>
+              </div>
+              <button id="btn-rematch-home" class="btn btn-primary gold-btn full-btn">🔄 إعادة التحدي (نفس الغرفة)</button>
+            </div>
+          </div>
+
+          <div class="mc-tab-panel" id="mc-panel-events">
+            <div id="sim-events-list" class="spine-wrap"></div>
+          </div>
+
+          <div class="mc-tab-panel hidden" id="mc-panel-stats">
+            <div class="stats-table">
+              <div class="stat-row">
+                <span id="stat-host-pos" class="stat-val-host">50%</span>
+                <span class="stat-label-text">الاستحواذ ⚽</span>
+                <span id="stat-guest-pos" class="stat-val-guest">50%</span>
+              </div>
+              <div class="stat-bar-container">
+                <div id="bar-host-pos" class="stat-bar-host" style="width: 50%;"></div>
+                <div id="bar-guest-pos" class="stat-bar-guest" style="width: 50%;"></div>
+              </div>
+              <div class="stat-row">
+                <span id="stat-host-shots" class="stat-val-host">0</span>
+                <span class="stat-label-text">إجمالي التسديدات 🥅</span>
+                <span id="stat-guest-shots" class="stat-val-guest">0</span>
+              </div>
+              <div class="stat-row">
+                <span id="stat-host-ontarget" class="stat-val-host">0</span>
+                <span class="stat-label-text">تسديدات على المرمى 🎯</span>
+                <span id="stat-guest-ontarget" class="stat-val-guest">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mc-tab-panel hidden" id="mc-panel-lineup">
+            <div class="lineup-strip" id="mc-lineup-strip-final"></div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <p>جميع الحقوق محفوظة &copy; 2026 <strong>المزاد</strong> 🔨</p>
+      <p style="font-size: 0.75rem; margin-top: 4px;">صُنعت بواسطة <strong style="color: var(--gold-primary);">Soliman Ahmed</strong></p>
+    </footer>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/sound-effects.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/user-profile.js"></script>
+  <script src="/js/profile-settings.js"></script>
+  <script src="/js/leaderboard.js"></script>
+  <script src="/js/player-database.js"></script>
+  <script src="/js/firebase-engine.js"></script>
+  <script src="/mazad/js/auction-engine.js"></script>
+  <script src="/mazad/js/app.js"></script>
+</body>
+</html>

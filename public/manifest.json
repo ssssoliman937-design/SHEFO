@@ -1,0 +1,17 @@
+{
+  "name": "Deal or No Deal Football Draft",
+  "short_name": "DOND Football",
+  "description": "تحدي تشكيلات كرة القدم أونلاين عبر الإنترنت - Deal or No Deal Draft",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071410",
+  "theme_color": "#071410",
+  "icons": [
+    {
+      "src": "/dond_app_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

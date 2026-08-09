@@ -1,0 +1,88 @@
+{
+  "name": "dea - Active-Idle Room Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "days", "daysInterval": 1 }
+          ]
+        }
+      },
+      "id": "trigger1",
+      "name": "Every Day",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-200, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://cuafa-9f3b6-default-rtdb.firebaseio.com/dond_rooms.json",
+        "options": {}
+      },
+      "id": "getDond",
+      "name": "Get dond_rooms",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 100]
+    },
+    {
+      "parameters": {
+        "url": "https://cuafa-9f3b6-default-rtdb.firebaseio.com/mazad_rooms.json",
+        "options": {}
+      },
+      "id": "getMazad",
+      "name": "Get mazad_rooms",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 300]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge1",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [280, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// IMPORTANT CAVEAT (read before trusting these numbers): this project has\n// no real user-accounts table - FIREBASE_AUTH_ENABLED is false, people just\n// type a display name and play. There is no persistent identity to track\n// 'a user' across visits. This report approximates activity from ROOMS\n// instead: a room touched in the last 24h counts as 'active', a room that\n// meets the same staleness rule as the cleanup workflow (finished, or\n// older than 6h with no update) counts as 'idle/stale'. It is a proxy, not\n// a real per-user active/idle count - if that's genuinely needed, the app\n// itself needs a users/ collection written on each session, which is a\n// code change, not just a workflow.\nconst ACTIVE_WINDOW_MS = 24 * 60 * 60 * 1000;\nconst STALE_MS = 6 * 60 * 60 * 1000;\nconst now = Date.now();\n\nfunction summarize(rooms) {\n  rooms = rooms || {};\n  let active = 0, stale = 0, total = 0;\n  const uniquePlayerIds = new Set();\n  for (const roomId of Object.keys(rooms)) {\n    const room = rooms[roomId] || {};\n    total++;\n    const age = room.createdAt ? (now - room.createdAt) : Infinity;\n    if (room.status === 'finished' || age > STALE_MS) stale++;\n    else if (age <= ACTIVE_WINDOW_MS) active++;\n    if (room.host?.id) uniquePlayerIds.add(room.host.id);\n    if (room.guest?.id) uniquePlayerIds.add(room.guest.id);\n  }\n  return { total, active, stale, approxDistinctSessionIds: uniquePlayerIds.size };\n}\n\nconst dond = summarize($input.first().json?.[0]);\nconst mazad = summarize($input.first().json?.[1]);\n\nreturn [{\n  json: {\n    generatedAt: new Date().toISOString(),\n    caveat: 'Room-based proxy, not real per-user tracking - no users/ collection exists in this project (auth disabled).',\n    deal_or_no_deal: dond,\n    mazad: mazad,\n    combined: {\n      totalRooms: dond.total + mazad.total,\n      activeRooms: dond.active + mazad.active,\n      staleRoomsPendingCleanup: dond.stale + mazad.stale\n    }\n  }\n}];"
+      },
+      "id": "report1",
+      "name": "Build Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "content": "## بعد الـ Build Report\nمفيش وجهة إرسال متحطة هنا لأن المستخدم ماحددش (إيميل؟ سلاك؟ تليجرام؟). ضيف نود إشعار بعد Build Report (Send Email / Slack / Telegram) وربطه بالمخرج ده - كل حقل جاهز في `json`.\n\n**تنبيه مهم:** الأرقام دي تقريبية من عدد الغرف مش عدد مستخدمين حقيقي - راجع كود الـ Build Report للتفاصيل.",
+        "height": 260,
+        "width": 360
+      },
+      "id": "note1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [740, 100]
+    }
+  ],
+  "connections": {
+    "Every Day": {
+      "main": [[
+        { "node": "Get dond_rooms", "type": "main", "index": 0 },
+        { "node": "Get mazad_rooms", "type": "main", "index": 0 }
+      ]]
+    },
+    "Get dond_rooms": { "main": [[{ "node": "Merge", "type": "main", "index": 0 }]] },
+    "Get mazad_rooms": { "main": [[{ "node": "Merge", "type": "main", "index": 1 }]] },
+    "Merge": { "main": [[{ "node": "Build Report", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

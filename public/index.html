@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مركز الألعاب ⚽🔨 — صفقة أم لا صفقة والمزاد</title>
+
+  <meta name="description" content="مركز ألعاب كرة قدم: العب صفقة أم لا صفقة (درافت حقائب) أو المزاد (مزايدة حية على النجوم) مع أصدقائك.">
+  <meta property="og:title" content="مركز الألعاب ⚽">
+  <meta property="og:description" content="لعبتان مستقلتان، غرف منفصلة لكل لعبة — اختار وابدأ.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Baloo+Bhaijaan+2:wght@600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="icon" type="image/png" href="/dond_app_icon.png">
+  <link rel="apple-touch-icon" href="/dond_app_icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#071410">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="مركز الألعاب">
+
+  <style>
+    :root {
+      --bg-dark: #071410;
+      --bg-card: rgba(11, 26, 20, 0.82);
+      --border-glass: rgba(212, 175, 55, 0.18);
+      --gold: #d4af37;
+      --gold-soft: rgba(212, 175, 55, 0.14);
+      --teal: #59d5c8;
+      --cyan: #22d3d0;
+      --red: #ff2d55;
+      --text-main: #f5f7f0;
+      --text-muted: #9fb0a6;
+      --font-display: "Baloo Bhaijaan 2", "Cairo", sans-serif;
+      --font-arabic: "Cairo", sans-serif;
+      --font-nums: "Oswald", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 900px 500px at 50% -10%, rgba(212, 175, 55, 0.10), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 90% 100%, rgba(89, 213, 200, 0.06), transparent 60%),
+        linear-gradient(180deg, var(--bg-dark) 0%, #050b09 100%);
+      color: var(--text-main);
+      font-family: var(--font-arabic);
+      direction: rtl;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0 44px, transparent 44px 88px);
+    }
+    .top-strip { height: 3px; background: linear-gradient(90deg, var(--red) 0%, var(--gold) 45%, transparent 80%); }
+    .page { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 56px 20px 80px; }
+
+    .hero { text-align: center; margin-bottom: 52px; }
+    .hero-mark {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 6px 18px; border: 1px solid var(--border-glass); border-radius: 20px;
+      background: var(--gold-soft); color: var(--gold); font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.3px; margin-bottom: 22px;
+    }
+    .hero-mark .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); box-shadow: 0 0 8px var(--red); animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: 0.3; } }
+    .ticker {
+      display: flex; align-items: center; gap: 10px; justify-content: center;
+      background: rgba(0,0,0,0.4); border: 1px solid var(--border-glass); border-radius: 10px;
+      padding: 9px 16px; margin: 0 auto 34px; max-width: 560px;
+      font-family: var(--font-nums); font-size: 0.74rem; letter-spacing: 0.5px; color: var(--cyan);
+    }
+    .ticker b { color: var(--gold); }
+    .name-gate {
+      max-width: 420px; margin: 0 auto 34px; background: var(--bg-card);
+      border: 1.5px solid var(--border-glass); border-radius: 16px; padding: 18px 20px;
+    }
+    .name-gate label { display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px; }
+    .name-gate input {
+      width: 100%; background: rgba(0,0,0,0.4); border: 1.5px solid var(--border-glass); border-radius: 10px;
+      padding: 11px 14px; color: var(--text-main); font-family: var(--font-arabic); font-size: 0.95rem;
+    }
+    .name-gate input:focus { outline: none; border-color: var(--cyan); }
+    .name-gate input.error { border-color: var(--red); animation: shake 0.3s; }
+    @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    .name-gate .err-msg { color: var(--red); font-size: 0.76rem; margin-top: 6px; display: none; }
+    .name-gate .err-msg.show { display: block; }
+    .name-gate .err-msg.ok { color: var(--gold); }
+    .game-card.locked { cursor: not-allowed; opacity: 0.55; filter: grayscale(0.3); }
+    .game-card.locked .cta { pointer-events: none; }
+    .hidden { display: none !important; }
+
+    .gate-title { font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin: 0 0 16px; text-align: center; }
+    .gate-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: var(--font-arabic); font-weight: 700; font-size: 0.92rem; cursor: pointer;
+      border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1.5px solid var(--border-glass);
+      background: rgba(255,255,255,0.04); color: var(--text-main); transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .gate-btn:hover { transform: translateY(-1px); border-color: var(--cyan); }
+    .gate-btn.gold { background: var(--gold); color: var(--bg-dark); border-color: var(--gold); }
+    .gate-btn .g-badge { background: #fff; color: #222; font-weight: 800; border-radius: 4px; padding: 1px 6px; font-size: 0.85rem; }
+    .gate-divider { text-align: center; color: var(--text-muted); font-size: 0.76rem; margin: 10px 0; position: relative; }
+    .gate-divider::before, .gate-divider::after { content: ''; position: absolute; top: 50%; width: 38%; height: 1px; background: var(--border-glass); }
+    .gate-divider::before { right: 0; } .gate-divider::after { left: 0; }
+    .name-gate input[type="tel"], .name-gate input[type="text"] {
+      width: 100%; background: rgba(0,0,0,0.4); border: 1.5px solid var(--border-glass); border-radius: 10px;
+      padding: 11px 14px; color: var(--text-main); font-family: var(--font-arabic); font-size: 0.95rem; margin-bottom: 10px;
+    }
+    .signed-in-row { display: flex; align-items: center; gap: 12px; }
+    .signed-in-row .hub-avatar { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; }
+    .signed-in-row .hub-user-name { flex: 1; font-weight: 700; }
+    .site-footer { text-align: center; margin-top: 60px; color: var(--text-muted); font-size: 0.72rem; }
+    .score-bug {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: rgba(0,0,0,0.35); border-radius: 8px; padding: 7px 10px; margin-bottom: 16px;
+      font-family: var(--font-nums); font-size: 0.82rem; position: relative; z-index: 1;
+    }
+    .score-bug .n { color: var(--gold); font-weight: 700; font-size: 0.95rem; }
+
+    /* Entrance sequence - hero, ticker, then each game card in turn. Respects
+       reduced-motion (the whole page just renders in its final state). */
+    @media (prefers-reduced-motion: no-preference) {
+      .hero, .ticker, .name-gate, .games, .flow, .site-footer { opacity: 0; animation: fadeUp 0.6s ease forwards; }
+      .hero { animation-delay: 0.05s; }
+      .ticker { animation-delay: 0.2s; }
+      .name-gate { animation-delay: 0.3s; }
+      .games { animation-delay: 0.4s; }
+      .game-card { opacity: 0; animation: fadeUp 0.5s ease forwards; }
+      .game-card.deal { animation-delay: 0.5s; }
+      .game-card.mazad { animation-delay: 0.62s; }
+      .flow { animation-delay: 0.7s; }
+      .site-footer { animation-delay: 0.8s; }
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    }
+    .hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 3.1rem); font-weight: 800; margin: 0 0 14px; text-wrap: balance; line-height: 1.15; }
+    .hero h1 .gold { color: var(--gold); text-shadow: 0 0 24px rgba(212, 175, 55, 0.35); }
+    .hero p { color: var(--text-muted); font-size: 1.02rem; max-width: 480px; margin: 0 auto; line-height: 1.9; }
+
+    .games { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    @media (max-width: 720px) { .games { grid-template-columns: 1fr; } }
+
+    .game-card {
+      position: relative; display: flex; flex-direction: column;
+      background: linear-gradient(165deg, var(--bg-card) 0%, rgba(5, 11, 9, 0.92) 100%);
+      border: 1.5px solid var(--border-glass); border-radius: 22px; padding: 26px 24px 24px;
+      overflow: hidden; text-decoration: none; color: inherit;
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; cursor: pointer;
+    }
+    .game-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 85% -10%, var(--card-glow, rgba(212,175,55,0.16)), transparent 55%);
+      pointer-events: none;
+    }
+    .game-card:hover, .game-card:focus-visible {
+      transform: translateY(-4px); border-color: var(--card-accent, var(--gold));
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45), 0 0 0 1px var(--card-accent, var(--gold)) inset;
+    }
+    .game-card:focus-visible { outline: 2px solid var(--card-accent, var(--gold)); outline-offset: 3px; }
+    .game-card.deal { --card-accent: var(--teal); --card-glow: rgba(89, 213, 200, 0.16); }
+    .game-card.mazad { --card-accent: var(--gold); --card-glow: rgba(212, 175, 55, 0.20); }
+
+    .game-emblem {
+      width: 58px; height: 58px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.7rem; margin-bottom: 18px; border: 1.5px solid var(--card-accent, var(--gold));
+      background: color-mix(in srgb, var(--card-accent, var(--gold)) 14%, transparent);
+      box-shadow: 0 0 22px color-mix(in srgb, var(--card-accent, var(--gold)) 30%, transparent);
+      position: relative; z-index: 1;
+    }
+    .game-card h2 { font-family: var(--font-display); font-size: 1.55rem; font-weight: 700; margin: 0 0 8px; position: relative; z-index: 1; }
+    .game-card .pitch { color: var(--text-muted); font-size: 0.9rem; line-height: 1.75; margin: 0 0 18px; position: relative; z-index: 1; }
+
+    .feature-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; position: relative; z-index: 1; }
+    .feature-chip {
+      font-size: 0.72rem; font-weight: 700; color: var(--text-main); background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09); border-radius: 8px; padding: 5px 10px; display: flex; align-items: center; gap: 5px;
+    }
+
+    .cta {
+      margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: var(--font-arabic); font-weight: 800; font-size: 0.92rem; color: var(--bg-dark);
+      background: var(--card-accent, var(--gold)); border-radius: 12px; padding: 12px;
+      position: relative; z-index: 1; border: 2px solid rgba(255,255,255,0.25);
+    }
+    .cta .arrow { transition: transform 0.2s ease; }
+    .game-card:hover .cta .arrow { transform: translateX(-4px); }
+
+    .flow { margin-top: 46px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.76rem; color: var(--text-muted); }
+    .flow-step { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 20px; padding: 6px 13px; }
+    .flow-step b { color: var(--text-main); }
+    .flow-arrow { color: var(--gold); font-size: 0.9rem; }
+
+    footer { text-align: center; margin-top: 60px; color: var(--text-muted); font-size: 0.72rem; }
+
+    /* Modal & Dashboard Styling */
+    .hub-modal-overlay {
+      position: fixed; inset: 0; background: rgba(5, 11, 9, 0.90);
+      display: flex; align-items: center; justify-content: center; z-index: 2000;
+      backdrop-filter: blur(8px); padding: 15px;
+    }
+    .hub-modal-content {
+      background: var(--bg-card); border: 2.5px solid var(--border-glass); border-radius: 24px;
+      width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.15);
+      animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .hub-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 24px; border-bottom: 1.5px solid var(--border-glass);
+    }
+    .hub-modal-header h2 { margin: 0; font-family: var(--font-display); font-size: 1.35rem; color: var(--gold); }
+    .hub-close-modal {
+      background: rgba(255,255,255,0.06); border: none; color: var(--text-muted);
+      width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; cursor: pointer; transition: background 0.2s, color 0.2s;
+    }
+    .hub-close-modal:hover { background: var(--red); color: #fff; }
+    .hub-modal-body { padding: 24px; }
+    
+    .user-profile-header {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+      background: rgba(0,0,0,0.25); padding: 16px; border-radius: 16px; border: 1px solid var(--border-glass);
+    }
+    .dash-avatar { width: 68px; height: 68px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; }
+    
+    .dash-stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;
+    }
+    .dash-stat-card {
+      background: rgba(0,0,0,0.3); border: 1.5px solid var(--border-glass); border-radius: 16px;
+      padding: 14px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px;
+    }
+    .dash-stat-card .num { font-family: var(--font-nums); font-size: 1.6rem; font-weight: 700; color: var(--text-main); }
+    .dash-stat-card .label { font-size: 0.74rem; color: var(--text-muted); }
+    
+    .dash-coins-row {
+      background: var(--gold-soft); border: 1px solid var(--border-glass); border-radius: 12px;
+      padding: 12px; text-align: center; font-size: 0.95rem; margin-bottom: 20px;
+    }
+    
+    .hub-search-input {
+      width: 100%; background: rgba(0,0,0,0.4); border: 1.5px solid var(--border-glass); border-radius: 10px;
+      padding: 11px 14px; color: var(--text-main); font-family: var(--font-arabic); font-size: 0.9rem; margin-bottom: 15px;
+    }
+    .hub-search-input:focus { outline: none; border-color: var(--cyan); }
+    
+    .table-container { width: 100%; overflow-x: auto; background: rgba(0,0,0,0.3); border-radius: 14px; border: 1px solid var(--border-glass); margin-bottom: 15px; }
+    .users-table { width: 100%; border-collapse: collapse; text-align: right; min-width: 580px; }
+    .users-table th, .users-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-glass); font-size: 0.8rem; }
+    .users-table th { background: rgba(0,0,0,0.4); color: var(--gold); font-weight: 700; }
+    .users-table td { color: var(--text-main); vertical-align: middle; }
+    .users-table tr:last-child td { border-bottom: none; }
+    .users-table tr:hover td { background: rgba(255,255,255,0.02); }
+    
+    .user-row-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gold); object-fit: cover; vertical-align: middle; margin-left: 8px; }
+    
+    .btn-action-small {
+      padding: 5px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; border: none; cursor: pointer; transition: transform 0.1s; margin-left: 5px;
+    }
+    .btn-action-small:active { transform: scale(0.95); }
+    .btn-action-small.ban { background: var(--red); color: #fff; }
+    .btn-action-small.unban { background: var(--teal); color: #000; }
+    .btn-action-small.admin-promote { background: var(--gold); color: #000; }
+    .btn-action-small.admin-demote { background: rgba(255,255,255,0.15); color: #fff; }
+    .btn-action-small.hide-lb { background: #ff7b00; color: #fff; }
+    .btn-action-small.show-lb { background: #6c5ce7; color: #fff; }
+    .btn-action-small.delete-room { background: var(--red); color: #fff; }
+
+    .recent-match-item {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 12px;
+      padding: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;
+    }
+    .recent-match-item .players { font-weight: 700; }
+    .recent-match-item .score { font-family: var(--font-nums); font-weight: 700; color: var(--cyan); }
+    .recent-match-item .time { color: var(--text-muted); font-size: 0.7rem; }
+    
+    @media (max-width: 600px) {
+      .dash-stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .hub-modal-content { max-height: 95vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-strip"></div>
+  <div class="page">
+
+    <div class="hero">
+      <span class="hero-mark"><span class="dot"></span> مركز الألعاب</span>
+      <h1>اختار لعبتك <span class="gold">وابدأ</span></h1>
+      <p>موقع واحد، لعبتين مستقلتين تمامًا — كل لعبة بغرفها وكودها الخاص. اختار وادخل على طول.</p>
+    </div>
+
+    <div class="ticker">🔴 <b>ON AIR</b> — صفقة أم لا صفقة · المزاد — غرف منفصلة تمامًا لكل لعبة</div>
+
+    <div class="name-gate" id="hub-auth-gate">
+      <div id="hub-signed-out">
+        <p class="gate-title">🔐 سجّل دخولك قبل ما تختار لعبتك</p>
+
+        <button type="button" id="hub-btn-google" class="gate-btn gold">
+          <span class="g-badge">G</span> تسجيل الدخول بحساب Google
+        </button>
+
+        <div class="gate-divider">أو</div>
+
+        <div id="hub-phone-step1">
+          <input type="tel" id="hub-phone-input" placeholder="رقم تليفونك (مثال: +201234567890)">
+          <button type="button" id="hub-btn-phone-send" class="gate-btn">📱 تسجيل الدخول برقم التليفون</button>
+          <div id="recaptcha-container"></div>
+          <div class="err-msg" id="hub-phone-msg"></div>
+        </div>
+        <div id="hub-phone-step2" class="hidden">
+          <input type="text" id="hub-phone-code" placeholder="اكتب الكود اللي جالك بالرسالة">
+          <button type="button" id="hub-btn-phone-verify" class="gate-btn gold">✅ تأكيد الكود</button>
+          <div class="err-msg" id="hub-phone-msg-verify"></div>
+        </div>
+
+        <div class="gate-divider">أو</div>
+
+        <label for="hub-name-input">اكمل كضيف بالاسم بس (من غير حساب):</label>
+        <input type="text" id="hub-name-input" placeholder="مثال: الشلهوب" maxlength="15" autocomplete="off">
+        <div class="err-msg" id="hub-name-err">اكتب اسمك الأول (3 حروف على الأقل)</div>
+        <button type="button" id="hub-btn-guest-continue" class="gate-btn">👤 استمرار كضيف</button>
+      </div>
+
+      <div id="hub-signed-in" class="hidden">
+        <div class="signed-in-row" style="display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
+          <img id="hub-user-avatar" class="hub-avatar" src="/dond_app_icon.png" alt="" style="width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--gold);">
+          <span id="hub-user-name" class="hub-user-name" style="font-weight: 800; color: #fff; font-size: 1rem;"></span>
+          <button type="button" id="hub-btn-dashboard" class="gate-btn gold" style="width:auto; margin:0; padding:8px 16px; font-size:0.85rem; font-weight:800;">لوحة التحكم 📊</button>
+          <button type="button" id="hub-btn-logout" class="gate-btn" style="width:auto; margin:0; padding:8px 16px; font-size:0.85rem; background:rgba(255,255,255,0.08);">خروج</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Modal -->
+    <div id="dashboard-modal" class="hub-modal-overlay hidden">
+      <div class="hub-modal-content">
+        <div class="hub-modal-header">
+          <h2 id="dashboard-title">📊 لوحة التحكم الخاصة بك</h2>
+          <button id="btn-close-dashboard" class="hub-close-modal">✕</button>
+        </div>
+        <div class="hub-modal-body">
+          
+          <!-- User View -->
+          <div id="dashboard-user-view">
+            <div class="user-profile-header">
+              <img id="dash-user-avatar" src="/dond_app_icon.png" class="dash-avatar" alt="">
+              <div>
+                <h3 id="dash-user-name-title" style="margin:0 0 5px; font-weight:800; font-size:1.3rem;"></h3>
+                <p id="dash-user-phone-email" style="margin:0 0 5px; color:var(--text-muted); font-size:0.85rem;"></p>
+                <div id="dash-user-role-badge" style="display:inline-block; padding:4px 10px; border-radius:10px; font-size:0.75rem; font-weight:bold; background:var(--gold-soft); color:var(--gold);">لاعب</div>
+              </div>
+            </div>
+
+            <div class="dash-stats-grid">
+              <div class="dash-stat-card">
+                <span class="num" id="dash-stat-matches">0</span>
+                <span class="label">إجمالي المباريات</span>
+              </div>
+              <div class="dash-stat-card" style="border-color: rgba(60, 203, 111, 0.3);">
+                <span class="num" id="dash-stat-wins" style="color: var(--teal);">0</span>
+                <span class="label">الفوز</span>
+              </div>
+              <div class="dash-stat-card" style="border-color: rgba(255, 45, 85, 0.3);">
+                <span class="num" id="dash-stat-losses" style="color: var(--red);">0</span>
+                <span class="label">الخسارة</span>
+              </div>
+              <div class="dash-stat-card">
+                <span class="num" id="dash-stat-draws">0</span>
+                <span class="label">التعادل</span>
+              </div>
+            </div>
+
+            <div class="dash-coins-row">
+              🪙 الكوينز المتاحة: <b style="color:var(--gold);" id="dash-stat-coins">0</b>
+            </div>
+
+            <div style="margin-top:20px;">
+              <h4 style="margin:0 0 10px; color:var(--gold);">🎖️ البادجات المحققة:</h4>
+              <div id="dash-badges-list" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+            </div>
+
+            <div id="dash-admin-btn-container" class="hidden" style="margin-top:30px; text-align:center;">
+              <button type="button" id="hub-btn-admin-panel" class="gate-btn gold" style="width:100%; max-width:240px; margin:0 auto;">⚙️ لوحة تحكم الأدمن</button>
+            </div>
+          </div>
+
+          <!-- Admin View (Initially Hidden) -->
+          <div id="dashboard-admin-view" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1.5px solid var(--border-glass); padding-bottom:10px; flex-wrap:wrap; gap:10px;">
+              <h3 style="margin:0; color:var(--gold); font-family:var(--font-display);">⚙️ لوحة تحكم الأدمن</h3>
+              <div style="display:flex; gap:10px;">
+                <button type="button" id="admin-btn-reset-losses" class="gate-btn" style="width:auto; margin:0; padding:6px 12px; font-size:0.8rem; background:rgba(255, 45, 85, 0.2); border:1px solid var(--red); color:#fff;" onclick="adminResetAllLosses()">🚨 تصفير خسارات الجميع</button>
+                <button type="button" id="btn-back-to-user-view" class="gate-btn" style="width:auto; margin:0; padding:6px 12px; font-size:0.8rem; background:rgba(255,255,255,0.08);">◀ رجوع لبروفايلي</button>
+              </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="dash-stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:25px;">
+              <div class="dash-stat-card">
+                <span class="num" id="admin-stat-total-users">0</span>
+                <span class="label">المستخدمين المسجلين</span>
+              </div>
+              <div class="dash-stat-card" style="border-color: rgba(34, 211, 208, 0.3);">
+                <span class="num" id="admin-stat-active-users" style="color:var(--cyan);">0</span>
+                <span class="label">النشطين (24 ساعة)</span>
+              </div>
+              <div class="dash-stat-card" style="border-color: rgba(255, 255, 255, 0.1);">
+                <span class="num" id="admin-stat-idle-users" style="color:var(--text-muted);">0</span>
+                <span class="label">الخاملين</span>
+              </div>
+            </div>
+
+            <!-- User Management Section -->
+            <div style="margin-bottom:30px;">
+              <h4 style="margin:0 0 10px; color:#fff;">👥 إدارة المستخدمين:</h4>
+              <input type="text" id="admin-user-search" class="hub-search-input" placeholder="ابحث بالاسم، الإيميل، أو رقم الهاتف...">
+              <div class="table-container">
+                <table class="users-table">
+                  <thead>
+                    <tr>
+                      <th>المستخدم</th>
+                      <th>معلومات الاتصال</th>
+                      <th>فوز/خسارة</th>
+                      <th>الرتبة</th>
+                      <th>التحكم</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-table-body">
+                    <!-- Dynamic rows -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Active Rooms Section -->
+            <div style="margin-bottom:30px;">
+              <h4 style="margin:0 0 10px; color:#fff;">🎮 إدارة الغرف النشطة:</h4>
+              <div class="table-container">
+                <table class="users-table">
+                  <thead>
+                    <tr>
+                      <th>اللعبة</th>
+                      <th>كود الغرفة</th>
+                      <th>المستضيف / الضيف</th>
+                      <th>الحالة</th>
+                      <th>التحكم</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-rooms-table-body">
+                    <!-- Dynamic rows -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Recent Matches Log -->
+            <div>
+              <h4 style="margin:0 0 10px; color:#fff;">📜 سجل المباريات الأخير:</h4>
+              <div id="admin-recent-matches" style="display:flex; flex-direction:column; gap:10px;">
+                <!-- Dynamic items -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <div class="games" id="hub-games">
+      <a class="game-card deal locked" href="/deal/">
+        <div class="game-emblem">⚽</div>
+        <h2>صفقة أم لا صفقة</h2>
+        <p class="pitch">درافت حقائب على طريقة الشو الشهير — اختار حقيبة، وقرر: تاخدها ولا تجرب غيرها؟ كوّن تشكيلتك وواجه الخصم.</p>
+        <div class="score-bug">Sallam <span class="n">2 : 1</span> shefo9</div>
+        <div class="feature-row">
+          <span class="feature-chip">🛡️ كروت مساعدة</span>
+          <span class="feature-chip">🏟️ محاكاة مباراة</span>
+          <span class="feature-chip">👥 مضيف وضيف</span>
+        </div>
+        <div class="cta"><span class="arrow">◀</span> العب صفقة أم لا صفقة</div>
+      </a>
+
+      <a class="game-card mazad locked" href="/mazad/">
+        <div class="game-emblem">🔨</div>
+        <h2>المزاد</h2>
+        <p class="pitch">ميزانية ثابتة، ولاعبين ٩٠+ بيطلعوا للمزايدة. اللي يكسب يتخصم منه المبلغ وياخد لاعب بونص مجاني كمان.</p>
+        <div class="score-bug">Haaland <span class="n">91</span> 42M</div>
+        <div class="feature-row">
+          <span class="feature-chip">💰 ميزانية 250M–1B</span>
+          <span class="feature-chip">🔨 مزايدة حية</span>
+          <span class="feature-chip">🎁 لاعب بونص</span>
+        </div>
+        <div class="cta"><span class="arrow">◀</span> ادخل المزاد</div>
+      </a>
+    </div>
+
+    <div class="flow">
+      <span class="flow-step">🌐 تدخل الموقع <b>/</b></span>
+      <span class="flow-arrow">←</span>
+      <span class="flow-step">👆 تختار لعبة</span>
+      <span class="flow-arrow">←</span>
+      <span class="flow-step">✍️ تكتب اسمك + كود الغرفة</span>
+      <span class="flow-arrow">←</span>
+      <span class="flow-step">🎮 تلعب</span>
+    </div>
+
+    <footer class="site-footer">
+      مركز الألعاب — كل لعبة غرفها ومحرك حالتها منفصل تمامًا عن التانية<br>
+      صُنعت بواسطة <b style="color: var(--gold);">Soliman Ahmed</b>
+    </footer>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    // Same Firebase project as the two games (kept inline here, not loaded
+    // from firebase-engine.js, because that file drags in the whole
+    // draft/match-simulation/auction engine the hub has no use for).
+    const HUB_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAuBJweWQ6Gz97wBRxBhK7Pa3LVzSU9HXE",
+      authDomain: "cuafa-9f3b6.firebaseapp.com",
+      projectId: "cuafa-9f3b6",
+      databaseURL: "https://cuafa-9f3b6-default-rtdb.firebaseio.com",
+      storageBucket: "cuafa-9f3b6.firebasestorage.app",
+      messagingSenderId: "517830998976",
+      appId: "1:517830998976:web:29779ba30337baa0732625",
+      measurementId: "G-P4GZVJSM96"
+    };
+    const HUB_AUTH_ENABLED = !/^ضع_/.test(HUB_FIREBASE_CONFIG.apiKey);
+    if (HUB_AUTH_ENABLED && !firebase.apps.length) {
+      firebase.initializeApp(HUB_FIREBASE_CONFIG);
+    }
+
+    // Auth gate: player must sign in (Google/phone) or explicitly continue as
+    // guest before the game cards unlock. Same localStorage keys as before
+    // (dond_player_name / mazad_player_name) are handed to whichever game
+    // gets picked next, so this is the only place a name/account is chosen.
+    (function () {
+      const gate = document.getElementById('hub-auth-gate');
+      const signedOut = document.getElementById('hub-signed-out');
+      const signedIn = document.getElementById('hub-signed-in');
+      const nameInput = document.getElementById('hub-name-input');
+      const errMsg = document.getElementById('hub-name-err');
+      const gamesEl = document.getElementById('hub-games');
+      if (!gate || !gamesEl) return;
+
+      let unlocked = false;
+      let currentUserProfile = null;
+      let currentIsAdmin = false;
+      let currentIsFounder = false;
+      const ADMIN_EMAIL = 'slyman776688@gmail.com';
+      const ADMIN_PHONE = '+201146131457';
+
+      function lockCards() {
+        unlocked = false;
+        gamesEl.querySelectorAll('.game-card').forEach(c => c.classList.add('locked'));
+      }
+      function unlockCards(name) {
+        unlocked = true;
+        if (name) {
+          localStorage.setItem('dond_player_name', name);
+          localStorage.setItem('mazad_player_name', name);
+        }
+        gamesEl.querySelectorAll('.game-card').forEach(c => c.classList.remove('locked'));
+      }
+
+      lockCards();
+
+      // Returning visitor who already has a saved name - no need to gate
+      // them again every visit.
+      const savedName = localStorage.getItem('dond_player_name') || localStorage.getItem('mazad_player_name');
+      if (savedName) {
+        if (nameInput) nameInput.value = savedName;
+        unlockCards();
+      }
+
+      gamesEl.querySelectorAll('.game-card').forEach((card) => {
+        card.addEventListener('click', (e) => {
+          if (unlocked) return;
+          e.preventDefault();
+          gate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      });
+
+      if (!HUB_AUTH_ENABLED) {
+        // Placeholder keys still in place somewhere - fall back to
+        // guest-name-only, hide the Google/phone options entirely.
+        document.getElementById('hub-btn-google').classList.add('hidden');
+        document.getElementById('hub-phone-step1').classList.add('hidden');
+        document.querySelectorAll('#hub-signed-out .gate-divider')[0]?.classList.add('hidden');
+        return;
+      }
+
+      const db = firebase.database();
+
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (user && !user.isAnonymous) {
+          try {
+            // Load user profile
+            const snap = await db.ref(`users/${user.uid}/profile`).once('value');
+            currentUserProfile = snap.val() || {};
+            
+            // Check Ban Status
+            if (currentUserProfile.isBanned === true) {
+              document.body.innerHTML = `
+                <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#071410; color:#fff; font-family:'Cairo',sans-serif; text-align:center; padding:20px;">
+                  <div style="font-size:4rem; margin-bottom:20px;">🚨</div>
+                  <h1 style="color:#ff2d55; font-size:2rem; margin-bottom:10px;">تم حظر الحساب</h1>
+                  <p style="color:#9fb0a6; font-size:1.1rem; max-width:500px;">آسفين، تم حظر حسابك من قِبل إدارة اللعبة لمخالفة الشروط.</p>
+                </div>
+              `;
+              return;
+            }
+            
+            currentIsFounder = user.email === ADMIN_EMAIL || user.phoneNumber === ADMIN_PHONE;
+            currentIsAdmin = currentIsFounder || currentUserProfile.role === 'admin';
+            
+            signedOut.classList.add('hidden');
+            signedIn.classList.remove('hidden');
+            
+            const name = currentUserProfile.name || user.displayName || 'لاعب';
+            document.getElementById('hub-user-avatar').src = safeAvatar(currentUserProfile.photoURL || user.photoURL);
+            document.getElementById('hub-user-name').textContent = name;
+            unlockCards(name);
+          } catch (err) {
+            console.error('Error loading profile at hub:', err);
+            // Fallback if database read fails temporarily
+            signedOut.classList.add('hidden');
+            signedIn.classList.remove('hidden');
+            const name = user.displayName || 'لاعب';
+            document.getElementById('hub-user-avatar').src = user.photoURL || '/dond_app_icon.png';
+            document.getElementById('hub-user-name').textContent = name;
+            unlockCards(name);
+          }
+        } else if (!savedName) {
+          signedOut.classList.remove('hidden');
+          signedIn.classList.add('hidden');
+          currentUserProfile = null;
+          currentIsAdmin = false;
+          currentIsFounder = false;
+        }
+      });
+
+      document.getElementById('hub-btn-google').addEventListener('click', async () => {
+        try {
+          await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        } catch (err) {
+          console.error('Auth error:', err.message);
+        }
+      });
+
+      let recaptchaVerifier = null;
+      let confirmationResult = null;
+
+      function phoneMsg(text, isError) {
+        const msg1 = document.getElementById('hub-phone-msg');
+        const msg2 = document.getElementById('hub-phone-msg-verify');
+        [msg1, msg2].forEach(el => {
+          if (el) {
+            el.textContent = text;
+            el.classList.toggle('show', !!text);
+            el.classList.toggle('ok', !isError);
+          }
+        });
+      }
+
+      document.getElementById('hub-btn-phone-send').addEventListener('click', async () => {
+        const phone = document.getElementById('hub-phone-input').value.trim();
+        if (!phone) {
+          phoneMsg('⚠️ أدخل رقم تليفون', true);
+          return;
+        }
+        try {
+          document.getElementById('hub-btn-phone-send').disabled = true;
+          phoneMsg('');
+          if (!recaptchaVerifier) {
+            recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'invisible' });
+          }
+          confirmationResult = await firebase.auth().signInWithPhoneNumber(phone, recaptchaVerifier);
+          phoneMsg('✅ تم إرسال الكود. شوف رسالة SMS.', false);
+          document.getElementById('hub-phone-step1').classList.add('hidden');
+          document.getElementById('hub-phone-step2').classList.remove('hidden');
+        } catch (err) {
+          console.error('Phone auth error:', err.message);
+          const msgs = {
+            'auth/invalid-phone-number': '❌ رقم تليفون غلط',
+            'auth/operation-not-allowed': '❌ الدول دي مش فعّالة في Firebase',
+            'auth/too-many-requests': '❌ حاول بعدين',
+            'auth/network-request-failed': '❌ لا نت'
+          };
+          phoneMsg(msgs[err.code] || `❌ ${err.message}`, true);
+        } finally {
+          document.getElementById('hub-btn-phone-send').disabled = false;
+        }
+      });
+
+      document.getElementById('hub-btn-phone-verify').addEventListener('click', async () => {
+        const code = document.getElementById('hub-phone-code').value.trim();
+        if (!confirmationResult) {
+          phoneMsg('⚠️ اطلب كود أول', true);
+          return;
+        }
+        if (!code) {
+          phoneMsg('⚠️ أدخل الكود', true);
+          return;
+        }
+        try {
+          document.getElementById('hub-btn-phone-verify').disabled = true;
+          phoneMsg('');
+          await confirmationResult.confirm(code);
+          confirmationResult = null;
+          phoneMsg('✅ سجلت دخولك تمام!', false);
+        } catch (err) {
+          console.error('Phone verify error:', err.message);
+          const msgs = {
+            'auth/invalid-verification-code': '❌ كود غلط',
+            'auth/code-expired': '❌ الكود انتهت مدته',
+            'auth/too-many-requests': '❌ حاول بعدين'
+          };
+          phoneMsg(msgs[err.code] || `❌ ${err.message}`, true);
+        } finally {
+          document.getElementById('hub-btn-phone-verify').disabled = false;
+        }
+      });
+
+      document.getElementById('hub-btn-guest-continue').addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        if (name.length < 3) {
+          nameInput.classList.add('error');
+          errMsg.classList.add('show');
+          nameInput.focus();
+          setTimeout(() => nameInput.classList.remove('error'), 350);
+          return;
+        }
+        unlockCards(name);
+        signedOut.classList.add('hidden');
+      });
+
+      nameInput.addEventListener('input', () => {
+        if (nameInput.value.trim().length >= 3) errMsg.classList.remove('show');
+      });
+
+      // -------------------------------------------------------------
+      // User and Admin Dashboard Logic
+      // -------------------------------------------------------------
+      const btnOpenDashboard = document.getElementById('hub-btn-dashboard');
+      const modalDashboard = document.getElementById('dashboard-modal');
+      const btnCloseDashboard = document.getElementById('btn-close-dashboard');
+      const btnAdminPanel = document.getElementById('hub-btn-admin-panel');
+      const btnBackToUserView = document.getElementById('btn-back-to-user-view');
+      const userView = document.getElementById('dashboard-user-view');
+      const adminView = document.getElementById('dashboard-admin-view');
+      const searchInput = document.getElementById('admin-user-search');
+      const usersTableBody = document.getElementById('admin-users-table-body');
+      const roomsTableBody = document.getElementById('admin-rooms-table-body');
+      const recentMatchesEl = document.getElementById('admin-recent-matches');
+      
+      const HUB_BADGE_DEFS = [
+        { id: 'first_match', icon: '⚽', label: 'ضربة البداية', desc: 'العب أول مباراة لك في أي لعبة' },
+        { id: 'first_dond_win', icon: '💼', label: 'صائد الصفقات', desc: 'فز بأول مباراة لك في صفقة أم لا صفقة' },
+        { id: 'first_mazad_win', icon: '🔨', label: 'مطرقة المزاد', desc: 'فز بأول مباراة لك في المزاد' },
+        { id: 'wins_5', icon: '🔥', label: 'البلدوزر', desc: 'سجّل 5 انتصارات إجمالاً' },
+        { id: 'wins_15', icon: '🏆', label: 'الأسطورة الكروية', desc: 'سجّل 15 انتصاراً إجمالاً' },
+        { id: 'matches_30', icon: '⚔️', label: 'اللاعب الوفي', desc: 'العب 30 مباراة إجمالاً في الموقع' }
+      ];
+
+      function esc(val) {
+        if (val === null || val === undefined) return '';
+        return String(val).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+
+      function safeAvatar(url) {
+        return (url && /^https?:\/\//i.test(url)) ? url : '/dond_app_icon.png';
+      }
+
+      function formatDuration(timestamp) {
+        if (!timestamp) return '---';
+        const diff = Date.now() - timestamp;
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'الآن';
+        if (mins < 60) return `منذ ${mins} دقيقة`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `منذ ${hours} ساعة`;
+        const days = Math.floor(hours / 24);
+        return `منذ ${days} يوم`;
+      }
+
+      function checkBadge(badgeId, p) {
+        if (!p) return false;
+        if (badgeId === 'first_match') return (p.totalMatches || 0) >= 1;
+        if (badgeId === 'first_dond_win') {
+          return Object.entries(p.stats || {}).some(([k, s]) => k.startsWith('dond_') && (s.wins || 0) >= 1);
+        }
+        if (badgeId === 'first_mazad_win') {
+          return Object.entries(p.stats || {}).some(([k, s]) => k.startsWith('mazad_') && (s.wins || 0) >= 1);
+        }
+        if (badgeId === 'wins_5') return (p.wins || 0) >= 5;
+        if (badgeId === 'wins_15') return (p.wins || 0) >= 15;
+        if (badgeId === 'matches_30') return (p.totalMatches || 0) >= 30;
+        return false;
+      }
+
+      btnOpenDashboard?.addEventListener('click', () => {
+        if (!currentUserProfile) return;
+        modalDashboard.classList.remove('hidden');
+        userView.classList.remove('hidden');
+        adminView.classList.add('hidden');
+        
+        document.getElementById('dash-user-avatar').src = safeAvatar(currentUserProfile.photoURL);
+        document.getElementById('dash-user-name-title').textContent = currentUserProfile.name || 'لاعب مجهول';
+        
+        const authUser = firebase.auth().currentUser;
+        document.getElementById('dash-user-phone-email').textContent = (authUser ? (authUser.email || authUser.phoneNumber || '') : '');
+        
+        const roleEl = document.getElementById('dash-user-role-badge');
+        if (currentIsFounder) {
+          roleEl.textContent = '👑 المالك والمؤسس';
+          roleEl.style.background = 'rgba(212, 175, 55, 0.2)';
+          roleEl.style.color = '#d4af37';
+        } else if (currentIsAdmin) {
+          roleEl.textContent = '🛡️ أدمن مساعد';
+          roleEl.style.background = 'rgba(34, 211, 208, 0.2)';
+          roleEl.style.color = '#22d3d0';
+        } else {
+          roleEl.textContent = '⚽ لاعب';
+          roleEl.style.background = 'rgba(255,255,255,0.06)';
+          roleEl.style.color = '#9fb0a6';
+        }
+
+        document.getElementById('dash-stat-matches').textContent = currentUserProfile.totalMatches || 0;
+        document.getElementById('dash-stat-wins').textContent = currentUserProfile.wins || 0;
+        document.getElementById('dash-stat-losses').textContent = currentUserProfile.losses || 0;
+        document.getElementById('dash-stat-draws').textContent = currentUserProfile.draws || 0;
+        document.getElementById('dash-stat-coins').textContent = currentUserProfile.coins || 0;
+
+        const badgesList = document.getElementById('dash-badges-list');
+        const allBadges = [
+          ...(currentIsFounder ? [{ id: 'founder', icon: '👑', label: 'مؤسس اللعبة', desc: 'مطور اللعبة ومؤسسها' }] : []),
+          ...HUB_BADGE_DEFS
+        ];
+
+        badgesList.innerHTML = allBadges.map(b => {
+          const isUnlocked = b.id === 'founder' ? currentIsFounder : checkBadge(b.id, currentUserProfile);
+          if (isUnlocked) {
+            return `<span class="profile-badge-chip unlocked" title="${esc(b.desc || b.label)} (مفتوح)" style="background:var(--gold-soft); border:1px solid var(--border-glass); color:var(--gold); border-radius:20px; padding:6px 14px; font-size:0.82rem; font-weight:700;">${esc(b.icon)} ${esc(b.label)}</span>`;
+          } else {
+            return `<span class="profile-badge-chip locked" title="طريقة الفتح: ${esc(b.desc)}" style="background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.15); color:var(--text-muted); filter:grayscale(1); opacity:0.6; border-radius:20px; padding:6px 14px; font-size:0.82rem; font-weight:700; cursor:help;">${esc(b.icon)} ${esc(b.label)} 🔒</span>`;
+          }
+        }).join('');
+
+        const adminBtnRow = document.getElementById('dash-admin-btn-container');
+        if (currentIsAdmin || currentIsFounder) {
+          adminBtnRow.classList.remove('hidden');
+        } else {
+          adminBtnRow.classList.add('hidden');
+        }
+      });
+
+      btnCloseDashboard?.addEventListener('click', () => {
+        modalDashboard.classList.add('hidden');
+      });
+
+      btnAdminPanel?.addEventListener('click', () => {
+        userView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        loadAdminData();
+      });
+
+      btnBackToUserView?.addEventListener('click', () => {
+        adminView.classList.add('hidden');
+        userView.classList.remove('hidden');
+      });
+
+      async function loadAdminData() {
+        usersTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري تحميل بيانات اللاعبين... ⏳</td></tr>';
+        roomsTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري تحميل الغرف... ⏳</td></tr>';
+        recentMatchesEl.innerHTML = '<div style="text-align:center; color:var(--text-muted);">جاري تحميل سجل المباريات... ⏳</div>';
+
+        try {
+          const usersSnap = await db.ref('users').once('value');
+          const allUsers = [];
+          usersSnap.forEach(child => {
+            allUsers.push({ uid: child.key, ...child.val() });
+          });
+
+          const totalUsers = allUsers.length;
+          let activeUsers = 0;
+          let idleUsers = 0;
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          const now = Date.now();
+
+          allUsers.forEach(u => {
+            const lastAct = u.profile?.lastPlayed || u.profile?.lastUpdated || 0;
+            if (now - lastAct < oneDayMs) {
+              activeUsers++;
+            } else {
+              idleUsers++;
+            }
+          });
+
+          document.getElementById('admin-stat-total-users').textContent = totalUsers;
+          document.getElementById('admin-stat-active-users').textContent = activeUsers;
+          document.getElementById('admin-stat-idle-users').textContent = idleUsers;
+
+          window._allUsersCache = allUsers;
+          renderUsersTable(allUsers);
+
+          const dondRoomsSnap = await db.ref('dond_rooms').once('value');
+          const mazadRoomsSnap = await db.ref('mazad_rooms').once('value');
+          const activeRooms = [];
+
+          dondRoomsSnap.forEach(child => {
+            const r = child.val();
+            if (r.status !== 'finished') {
+              activeRooms.push({ id: child.key, type: 'dond', ...r });
+            }
+          });
+          mazadRoomsSnap.forEach(child => {
+            const r = child.val();
+            if (r.status !== 'finished') {
+              activeRooms.push({ id: child.key, type: 'mazad', ...r });
+            }
+          });
+
+          renderRoomsTable(activeRooms);
+
+          const matchesSnap = await db.ref('recent_matches').limitToLast(10).once('value');
+          const matches = [];
+          matchesSnap.forEach(child => {
+            matches.push({ id: child.key, ...child.val() });
+          });
+          matches.reverse();
+          renderRecentMatches(matches);
+
+        } catch (err) {
+          console.error('Error loading admin data:', err);
+        }
+      }
+
+      function renderUsersTable(usersList) {
+        usersTableBody.innerHTML = '';
+        if (usersList.length === 0) {
+          usersTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">لا يوجد لاعبين مطابقة للبحث</td></tr>';
+          return;
+        }
+
+        usersList.forEach(u => {
+          const profile = u.profile || {};
+          const isFounder = profile.email === ADMIN_EMAIL || profile.phone === ADMIN_PHONE;
+          const isAdmin = isFounder || profile.role === 'admin';
+          const isBanned = profile.isBanned === true;
+          const isHidden = profile.hideFromLeaderboard === true;
+
+          const wins = profile.wins || 0;
+          const losses = profile.losses || 0;
+          const draws = profile.draws || 0;
+
+          const contact = profile.email || profile.phone || 'ضيف بالاسم';
+          
+          let roleLabel = 'لاعب';
+          if (isFounder) roleLabel = '👑 مؤسس';
+          else if (isAdmin) roleLabel = '🛡️ أدمن';
+
+          let buttonsHTML = '';
+          if (!isFounder) {
+            if (isBanned) {
+              buttonsHTML += `<button class="btn-action-small unban" onclick="adminToggleBan('${u.uid}', false)">إلغاء حظر</button>`;
+            } else {
+              buttonsHTML += `<button class="btn-action-small ban" onclick="adminToggleBan('${u.uid}', true)">حظر</button>`;
+            }
+
+            if (isHidden) {
+              buttonsHTML += `<button class="btn-action-small show-lb" onclick="adminToggleLeaderboard('${u.uid}', false)">إظهار بالتصنيف</button>`;
+            } else {
+              buttonsHTML += `<button class="btn-action-small hide-lb" onclick="adminToggleLeaderboard('${u.uid}', true)">إخفاء بالتصنيف</button>`;
+            }
+
+            if (currentIsFounder) {
+              if (profile.role === 'admin') {
+                buttonsHTML += `<button class="btn-action-small admin-demote" onclick="adminToggleRole('${u.uid}', 'player')">لاعب عادي</button>`;
+              } else {
+                buttonsHTML += `<button class="btn-action-small admin-promote" onclick="adminToggleRole('${u.uid}', 'admin')">ترقية لأدمن</button>`;
+              }
+            }
+          } else {
+            buttonsHTML = '<span style="color:var(--text-muted); font-style:italic;">المالك (بلا إجراء)</span>';
+          }
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <img src="${safeAvatar(profile.photoURL)}" class="user-row-avatar">
+              <span style="font-weight:700;">${esc(profile.name || 'لاعب')}</span>
+              ${isBanned ? ' <span style="color:var(--red); font-weight:bold;">(محظور)</span>' : ''}
+              ${isHidden ? ' <span style="color:#ff7b00; font-weight:bold;">(مخفي)</span>' : ''}
+            </td>
+            <td style="color:var(--text-muted); font-size:0.75rem;">${esc(contact)}</td>
+            <td>
+              ${isFounder ? `
+                <div style="font-family:var(--font-nums); font-weight:bold;">
+                  <span style="color:var(--teal);">${wins}</span> / 
+                  <span style="color:var(--red);">${losses}</span> / 
+                  <span>${draws}</span>
+                </div>
+              ` : `
+                <div style="display:flex; gap:4px; align-items:center;">
+                  <input type="number" value="${wins}" title="فوز" style="width:45px; background:rgba(0,0,0,0.5); border:1px solid var(--border-glass); color:var(--teal); text-align:center; padding:3px; border-radius:6px; font-family:var(--font-nums); font-size:0.8rem;" onchange="adminUpdateStat('${u.uid}', 'wins', this.value)">
+                  <span>/</span>
+                  <input type="number" value="${losses}" title="خسارة" style="width:45px; background:rgba(0,0,0,0.5); border:1px solid var(--border-glass); color:var(--red); text-align:center; padding:3px; border-radius:6px; font-family:var(--font-nums); font-size:0.8rem;" onchange="adminUpdateStat('${u.uid}', 'losses', this.value)">
+                  <span>/</span>
+                  <input type="number" value="${draws}" title="تعادل" style="width:45px; background:rgba(0,0,0,0.5); border:1px solid var(--border-glass); color:#fff; text-align:center; padding:3px; border-radius:6px; font-family:var(--font-nums); font-size:0.8rem;" onchange="adminUpdateStat('${u.uid}', 'draws', this.value)">
+                </div>
+              `}
+            </td>
+            <td style="font-weight:bold; color:${isFounder ? '#d4af37' : (isAdmin ? '#22d3d0' : '#9fb0a6')}">${roleLabel}</td>
+            <td>${buttonsHTML}</td>
+          `;
+          usersTableBody.appendChild(tr);
+        });
+      }
+
+      function renderRoomsTable(rooms) {
+        roomsTableBody.innerHTML = '';
+        if (rooms.length === 0) {
+          roomsTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">لا يوجد غرف نشطة حالياً ⚽</td></tr>';
+          return;
+        }
+
+        rooms.forEach(r => {
+          const gameName = r.type === 'dond' ? '⚽ صفقة أم لا صفقة' : '🔨 المزاد';
+          const p1 = r.host ? r.host.name : '---';
+          const p2 = r.guest ? r.guest.name : (r.isAiMode ? '🤖 بوت AI' : 'في الانتظار...');
+          const status = r.status || 'lobby';
+          
+          let statusLabel = 'قائمة الانتظار';
+          if (status === 'drafting' || status === 'bidding') statusLabel = 'جاري اللعب 🎮';
+          else if (status === 'simulating') statusLabel = 'المحاكاة 🏟️';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-weight:700;">${gameName}</td>
+            <td style="font-family:var(--font-nums); font-weight:bold; color:var(--cyan);">${esc(r.id)}</td>
+            <td>${esc(p1)} <span style="color:var(--text-muted);">ضد</span> ${esc(p2)}</td>
+            <td style="color:var(--teal); font-weight:bold;">${statusLabel}</td>
+            <td>
+              <button class="btn-action-small delete-room" onclick="adminDeleteRoom('${r.type}', '${r.id}')">إغلاق الغرفة</button>
+            </td>
+          `;
+          roomsTableBody.appendChild(tr);
+        });
+      }
+
+      function renderRecentMatches(matches) {
+        recentMatchesEl.innerHTML = '';
+        if (matches.length === 0) {
+          recentMatchesEl.innerHTML = '<div style="text-align:center; color:var(--text-muted);">لا توجد مباريات مسجلة مؤخراً</div>';
+          return;
+        }
+
+        matches.forEach(m => {
+          const gameLabel = m.game === 'dond' ? 'صفقة' : 'مزاد';
+          const modeLabel = m.mode === 'classic' ? 'سريع' : 'كامل';
+          
+          const div = document.createElement('div');
+          div.className = 'recent-match-item';
+          div.innerHTML = `
+            <div>
+              <span class="players">${esc(m.hostName)} ضد ${esc(m.guestName)}</span>
+              <span style="font-size:0.7rem; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:6px; margin-right:8px;">${gameLabel} (${modeLabel})</span>
+            </div>
+            <div>
+              <span class="score">${m.hostGoals} - ${m.guestGoals}</span>
+              <span class="time" style="margin-right:12px;">${formatDuration(m.timestamp)}</span>
+            </div>
+          `;
+          recentMatchesEl.appendChild(div);
+        });
+      }
+
+      searchInput?.addEventListener('input', () => {
+        const query = searchInput.value.trim().toLowerCase();
+        if (!window._allUsersCache) return;
+        
+        if (!query) {
+          renderUsersTable(window._allUsersCache);
+          return;
+        }
+
+        const filtered = window._allUsersCache.filter(u => {
+          const profile = u.profile || {};
+          const name = String(profile.name || '').toLowerCase();
+          const email = String(profile.email || '').toLowerCase();
+          const phone = String(profile.phone || '').toLowerCase();
+          return name.includes(query) || email.includes(query) || phone.includes(query);
+        });
+
+        renderUsersTable(filtered);
+      });
+
+      window.adminUpdateStat = async function(targetUid, statKey, value) {
+        const numVal = parseInt(value);
+        if (isNaN(numVal) || numVal < 0) {
+          alert('⚠️ الرجاء إدخال رقم صحيح أكبر من أو يساوي 0');
+          return;
+        }
+        try {
+          const updates = {};
+          updates[statKey] = numVal;
+
+          // Recalculate totalMatches = wins + losses + draws
+          const snap = await db.ref(`users/${targetUid}/profile`).once('value');
+          const profile = snap.val() || {};
+          
+          const currentWins = statKey === 'wins' ? numVal : (profile.wins || 0);
+          const currentLosses = statKey === 'losses' ? numVal : (profile.losses || 0);
+          const currentDraws = statKey === 'draws' ? numVal : (profile.draws || 0);
+          
+          updates.totalMatches = currentWins + currentLosses + currentDraws;
+
+          await db.ref(`users/${targetUid}/profile`).update(updates);
+          
+          // Also update cache locally so search results stay synced immediately
+          if (window._allUsersCache) {
+            const cachedUser = window._allUsersCache.find(u => u.uid === targetUid);
+            if (cachedUser && cachedUser.profile) {
+              cachedUser.profile[statKey] = numVal;
+              cachedUser.profile.totalMatches = updates.totalMatches;
+            }
+          }
+        } catch (err) {
+          alert('❌ فشل تعديل الإحصائيات: تأكد من الصلاحيات.');
+          console.error(err);
+        }
+      };
+
+      window.adminResetAllLosses = async function() {
+        if (!confirm('🚨 تحذير هام: هل تريد بالتأكيد تصفير ورسترة الخسارات لجميع المستخدمين في الموقع كله؟ هذا الإجراء لا يمكن التراجع عنه!')) return;
+        
+        try {
+          const btn = document.getElementById('admin-btn-reset-losses');
+          if (btn) btn.disabled = true;
+          
+          const usersSnap = await db.ref('users').once('value');
+          const updates = {};
+          
+          usersSnap.forEach(child => {
+            const uid = child.key;
+            const userVal = child.val();
+            const profile = userVal && userVal.profile;
+            if (profile) {
+              updates[`users/${uid}/profile/losses`] = 0;
+              
+              const wins = profile.wins || 0;
+              const draws = profile.draws || 0;
+              updates[`users/${uid}/profile/totalMatches`] = wins + draws;
+              
+              if (profile.stats) {
+                Object.keys(profile.stats).forEach(gameKey => {
+                  updates[`users/${uid}/profile/stats/${gameKey}/losses`] = 0;
+                  const gWins = profile.stats[gameKey].wins || 0;
+                  const gDraws = profile.stats[gameKey].draws || 0;
+                  updates[`users/${uid}/profile/stats/${gameKey}/totalMatches`] = gWins + gDraws;
+                });
+              }
+            }
+          });
+          
+          await db.ref().update(updates);
+          alert('✅ تم تصفير جميع الخسارات لجميع اللاعبين بنجاح!');
+          loadAdminData();
+        } catch (err) {
+          alert('❌ فشل الإجراء: تأكد من الصلاحيات.');
+          console.error(err);
+        } finally {
+          const btn = document.getElementById('admin-btn-reset-losses');
+          if (btn) btn.disabled = false;
+        }
+      };
+
+      window.adminToggleBan = async function(targetUid, banStatus) {
+        const actionText = banStatus ? 'حظر' : 'إلغاء حظر';
+        if (!confirm(`متأكد إنك عاوز تعمل ${actionText} للاعب ده؟`)) return;
+
+        try {
+          await db.ref(`users/${targetUid}/profile`).update({ isBanned: banStatus });
+          alert(`✅ تم ${actionText} اللاعب بنجاح!`);
+          loadAdminData();
+        } catch (err) {
+          alert('❌ فشل الإجراء: تأكد من الصلاحيات.');
+          console.error(err);
+        }
+      };
+
+      window.adminToggleLeaderboard = async function(targetUid, hideStatus) {
+        const actionText = hideStatus ? 'إخفاء من' : 'إظهار في';
+        if (!confirm(`متأكد إنك عاوز تعمل ${actionText} التصنيف للاعب ده؟`)) return;
+
+        try {
+          await db.ref(`users/${targetUid}/profile`).update({ hideFromLeaderboard: hideStatus });
+          alert(`✅ تم تعديل ظهور اللاعب في التصنيف!`);
+          loadAdminData();
+        } catch (err) {
+          alert('❌ فشل الإجراء: تأكد من الصلاحيات.');
+          console.error(err);
+        }
+      };
+
+      window.adminToggleRole = async function(targetUid, newRole) {
+        if (!currentIsFounder) return;
+        const actionText = newRole === 'admin' ? 'ترقية لأدمن' : 'تنزيل لرتبة لاعب عادي';
+        if (!confirm(`هل تريد تأكيد ${actionText}؟`)) return;
+
+        try {
+          await db.ref(`users/${targetUid}/profile`).update({ role: newRole });
+          alert(`✅ تم تغيير رتبة اللاعب بنجاح!`);
+          loadAdminData();
+        } catch (err) {
+          alert('❌ فشل الإجراء: تأكد من الصلاحيات.');
+          console.error(err);
+        }
+      };
+
+      window.adminDeleteRoom = async function(gameType, roomId) {
+        if (!confirm('متأكد إنك عاوز تقفل وتلغي الغرفة دي؟ اللاعبين هيخرجوا منها فوراً.')) return;
+
+        try {
+          const path = gameType === 'dond' ? 'dond_rooms' : 'mazad_rooms';
+          await db.ref(`${path}/${roomId}`).remove();
+          alert('✅ تم إغلاق وحذف الغرفة بنجاح!');
+          loadAdminData();
+        } catch (err) {
+          alert('❌ فشل الإجراء.');
+          console.error(err);
+        }
+      };
+
+      document.getElementById('hub-btn-logout').addEventListener('click', async () => {
+        try { await firebase.auth().signOut(); } catch (e) {}
+        localStorage.removeItem('dond_player_name');
+        localStorage.removeItem('mazad_player_name');
+        signedIn.classList.add('hidden');
+        signedOut.classList.remove('hidden');
+        lockCards();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Promo Hero — مركز الألعاب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Baloo+Bhaijaan+2:wght@600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #071410;
+    --bg-dark-2: #0c1f18;
+    --border-glass: rgba(212, 175, 55, 0.18);
+    --gold-primary: #d4af37;
+    --gold-bright: #f2cd5c;
+    --gold-gradient: linear-gradient(135deg, #f2cd5c 0%, #b8860b 100%);
+    --teal: #59d5c8;
+    --live-red: #ff2d55;
+    --live-cyan: #22d3d0;
+    --text-main: #f5f7f0;
+    --text-muted: #9fb0a6;
+    --font-arabic: 'Cairo', sans-serif;
+    --font-display: 'Baloo Bhaijaan 2', 'Cairo', sans-serif;
+    --font-nums: 'Oswald', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #050b09;
+  }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    font-family: var(--font-arabic);
+  }
+
+  .stage {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -8%, rgba(212, 175, 55, 0.12), transparent 60%),
+      radial-gradient(ellipse 700px 480px at 92% 105%, rgba(89, 213, 200, 0.08), transparent 60%),
+      linear-gradient(180deg, var(--bg-dark) 0%, #050b09 100%);
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.16);
+  }
+
+  /* ---- decorative background layer: stadium marking + light beams + grain ---- */
+  .bg-fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .pitch-circle {
+    position: absolute; left: 50%; top: 46%; width: 300px; height: 300px;
+    transform: translate(-50%, -50%);
+    border: 1.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+  }
+  .pitch-line {
+    position: absolute; left: 8%; right: 8%; top: 46%; height: 1.5px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .beam { position: absolute; width: 420px; height: 620px; pointer-events: none; }
+  .beam-l { top: -220px; left: -140px; transform: rotate(-24deg);
+    background: radial-gradient(ellipse at top, rgba(242, 205, 92, 0.16), transparent 70%); }
+  .beam-r { top: -220px; right: -140px; transform: rotate(24deg);
+    background: radial-gradient(ellipse at top, rgba(89, 213, 200, 0.12), transparent 70%); }
+  .grain {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.014) 0 44px, transparent 44px 88px);
+  }
+
+  .strip-top {
+    position: absolute; top: 0; left: 0; right: 0; height: 5px; z-index: 3;
+    background: linear-gradient(90deg, var(--live-red) 0%, var(--gold-primary) 45%, transparent 82%);
+  }
+
+  .grid {
+    position: relative; z-index: 1;
+    height: 100%;
+    padding-top: 5px;
+    display: grid;
+    grid-template-rows: 70px 1fr 60px;
+  }
+
+  /* ---- header ---- */
+  .row.header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 46px;
+  }
+  .live-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(255, 45, 85, 0.10); border: 1px solid rgba(255, 45, 85, 0.35);
+    border-radius: 20px; padding: 6px 14px;
+    font-family: var(--font-nums); font-size: 13px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--live-red);
+  }
+  .live-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--live-red);
+    box-shadow: 0 0 8px var(--live-red);
+  }
+  .brand {
+    font-family: var(--font-arabic); font-weight: 700; font-size: 15px;
+    color: var(--gold-primary); display: inline-flex; align-items: center; gap: 8px;
+  }
+
+  /* ---- main split ---- */
+  .row.main {
+    display: grid;
+    grid-template-columns: 1fr 84px 1fr;
+    padding: 0 44px;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .panel {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    position: relative; overflow: hidden;
+    border-radius: 26px;
+    padding: 30px 34px;
+    background: linear-gradient(165deg, rgba(11, 26, 20, 0.80) 0%, rgba(5, 11, 9, 0.94) 100%);
+    border: 1.5px solid var(--border-glass);
+  }
+  .panel::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+  }
+  .panel.deal { border-color: rgba(89, 213, 200, 0.30); box-shadow: 0 0 0 1px rgba(89, 213, 200, 0.10) inset; }
+  .panel.deal::before { background: radial-gradient(circle at 82% -8%, rgba(89, 213, 200, 0.18), transparent 55%); }
+  .panel.mazad { border-color: rgba(212, 175, 55, 0.34); box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.12) inset; }
+  .panel.mazad::before { background: radial-gradient(circle at 18% -8%, rgba(212, 175, 55, 0.20), transparent 55%); }
+
+  .panel > * { position: relative; z-index: 1; }
+
+  /* compound emblem visuals */
+  .visual { position: relative; width: 120px; height: 120px; margin-bottom: 20px; }
+
+  .mini-case {
+    position: absolute; width: 72px; height: 58px; left: 12px; top: 30px;
+    border-radius: 9px; transform: rotate(8deg);
+    background: linear-gradient(165deg, rgba(11, 26, 20, 0.95), rgba(5, 11, 9, 0.98));
+    border: 2px solid var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+  }
+  .mini-case::before {
+    content: ''; position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 12px; border: 2px solid var(--teal); border-bottom: none;
+    border-radius: 6px 6px 0 0;
+  }
+  .mini-case span {
+    font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--gold-bright);
+  }
+  .ball-badge {
+    position: absolute; width: 62px; height: 62px; right: 6px; bottom: 4px;
+    border-radius: 16px; transform: rotate(-10deg);
+    background: rgba(89, 213, 200, 0.16); border: 2px solid var(--teal);
+    box-shadow: 0 0 20px rgba(89, 213, 200, 0.30);
+    display: flex; align-items: center; justify-content: center; font-size: 30px;
+  }
+
+  .mini-card {
+    position: absolute; width: 68px; height: 92px; right: 16px; top: 8px;
+    border-radius: 10px; transform: rotate(-9deg);
+    background: linear-gradient(165deg, rgba(11, 26, 20, 0.95), rgba(5, 11, 9, 0.98));
+    border: 2px solid var(--gold-primary);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+  }
+  .mini-card .rt { font-family: var(--font-nums); font-weight: 700; font-size: 22px; color: var(--gold-bright); }
+  .mini-card .nm { font-family: var(--font-arabic); font-size: 9px; color: var(--text-muted); letter-spacing: 0.5px; }
+  .gavel-badge {
+    position: absolute; width: 62px; height: 62px; left: 6px; bottom: 2px;
+    border-radius: 16px; transform: rotate(12deg);
+    background: rgba(212, 175, 55, 0.18); border: 2px solid var(--gold-primary);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.32);
+    display: flex; align-items: center; justify-content: center; font-size: 30px;
+  }
+
+  .panel h1 {
+    font-family: var(--font-display); font-weight: 800; font-size: 42px;
+    color: var(--text-main); margin-bottom: 12px; line-height: 1.15;
+  }
+  .panel h1 .gold {
+    background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .panel p.tag {
+    font-family: var(--font-arabic); font-size: 15.5px; line-height: 1.7; color: var(--text-muted);
+    max-width: 420px; margin-bottom: 16px;
+  }
+
+  .score-bug {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: rgba(0, 0, 0, 0.35); border-radius: 8px; padding: 8px 16px; margin-bottom: 14px;
+    font-family: var(--font-nums); font-size: 14px; color: var(--text-main);
+  }
+  .score-bug .n { color: var(--gold-primary); font-weight: 700; font-size: 16px; }
+
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; max-width: 440px; }
+  .chip {
+    font-family: var(--font-arabic); font-size: 11.5px; font-weight: 700; color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px; padding: 6px 11px; display: inline-flex; align-items: center; gap: 5px;
+  }
+
+  /* ---- divider ---- */
+  .divider { position: relative; display: flex; align-items: center; justify-content: center; }
+  .divider::before {
+    content: ''; position: absolute; top: 6%; bottom: 6%; left: 50%; width: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, transparent, rgba(212, 175, 55, 0.55) 50%, transparent);
+  }
+  .divider .badge {
+    position: relative; z-index: 1; width: 72px; height: 72px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 30px;
+    background: radial-gradient(circle at 35% 30%, rgba(242, 205, 92, 0.22), rgba(11, 26, 20, 0.92));
+    border: 2px solid var(--gold-primary);
+    box-shadow: 0 0 26px rgba(212, 175, 55, 0.35);
+  }
+
+  /* ---- footer ticker ---- */
+  .row.footer { display: flex; align-items: center; justify-content: center; padding: 0 46px; }
+  .ticker {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-glass); border-radius: 10px;
+    padding: 9px 20px;
+    font-family: var(--font-nums); font-size: 13.5px; letter-spacing: 0.4px; color: var(--live-cyan);
+  }
+  .ticker b { color: var(--gold-primary); }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="bg-fx">
+      <div class="beam beam-l"></div>
+      <div class="beam beam-r"></div>
+      <div class="pitch-line"></div>
+      <div class="pitch-circle"></div>
+      <div class="grain"></div>
+    </div>
+    <div class="strip-top"></div>
+
+    <div class="grid">
+      <div class="row header">
+        <div class="live-pill"><span class="dot"></span>ON AIR</div>
+        <div class="brand">👑 مركز الألعاب</div>
+      </div>
+
+      <div class="row main">
+        <div class="panel deal">
+          <div class="visual">
+            <div class="mini-case"><span>؟</span></div>
+            <div class="ball-badge">⚽</div>
+          </div>
+          <h1><span class="gold">صفقة</span> أم لا صفقة</h1>
+          <p class="tag">درافت حقائب على طريقة الشو الشهير — اختار حقيبة، وقرر: تاخدها ولا تجرب غيرها؟</p>
+          <div class="score-bug">Sallam <span class="n">2 : 1</span> shefo9</div>
+          <div class="chips">
+            <span class="chip">🛡️ كروت مساعدة</span>
+            <span class="chip">🏟️ محاكاة مباراة</span>
+            <span class="chip">👥 مضيف وضيف</span>
+          </div>
+        </div>
+
+        <div class="divider"><span class="badge">👑</span></div>
+
+        <div class="panel mazad">
+          <div class="visual">
+            <div class="mini-card"><span class="rt">91</span><span class="nm">Haaland</span></div>
+            <div class="gavel-badge">🔨</div>
+          </div>
+          <h1><span class="gold">المزاد</span></h1>
+          <p class="tag">ميزانية ثابتة، ولاعبين ٩٠+ بيطلعوا للمزايدة. اللي يكسب يتخصم منه المبلغ وياخد لاعب بونص مجاني كمان.</p>
+          <div class="score-bug">Haaland <span class="n">91</span> 42M</div>
+          <div class="chips">
+            <span class="chip">💰 ميزانية 250M–1B</span>
+            <span class="chip">🔨 مزايدة حية</span>
+            <span class="chip">🎁 لاعب بونص</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row footer">
+        <div class="ticker">🔴 <b>ON AIR</b> — صفقة أم لا صفقة · المزاد — غرف منفصلة تمامًا لكل لعبة</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

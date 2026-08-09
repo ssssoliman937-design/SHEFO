@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deal Or No Deal Football Draft ⚽🧰 — لعبة صفقة أم لا صفقة كرة القدم</title>
+  
+  <!-- SEO & Social Meta Tags -->
+  <meta name="description" content="لعبة كرة قدم تفاعلية. كوّن فريقك من نجومك المفضلين وتحدى الأصدقاء أو البوت في بث مباشر!">
+  <meta name="keywords" content="Deal or No Deal Football, لعبة كرة قدم, تشكيلة كروية, بث مباشر, تحدي كروي">
+  <meta property="og:title" content="Deal Or No Deal Football Draft ⚽">
+  <meta property="og:description" content="كون فريقك الأحلام من أفضل نجوم كرة القدم وتحدى أصدقائك أو البوت أونلاين!">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Google Fonts & CDN Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Baloo+Bhaijaan+2:wght@600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- PWA Mobile Icons & Theme -->
+  <link rel="icon" type="image/png" href="/dond_app_icon.png">
+  <link rel="apple-touch-icon" href="/dond_app_icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#071410">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DOND Football">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Initial Loading Screen Overlay -->
+  <div id="app-loading-screen">
+    <div class="spinner-ring"></div>
+    <h3 style="color: var(--gold-primary); font-family: var(--font-arabic); font-weight: 800;">جاري تحميل المستديرة... ⚽</h3>
+  </div>
+
+  <!-- Confetti Particle Canvas for Celebration -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Animated Background Elements -->
+  <div class="stadium-bg"></div>
+  <div class="light-beam beam-left"></div>
+  <div class="light-beam beam-right"></div>
+  <div id="emoji-floating-container" class="emoji-floating-container"></div>
+
+  <div id="app" class="app-container">
+
+    <!-- TOP NAV / HEADER BAR -->
+    <header class="top-nav glass-card">
+      <div class="nav-brand">
+        <h1 class="game-logo">DEAL <span class="gold-text">OR NO DEAL</span></h1>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="/" class="btn-icon back-to-hub-btn" title="العودة لمركز الألعاب">✕</a>
+        <button id="btn-leave-room" class="btn-icon hidden" title="الخروج من الغرفة والعودة للقائمة الرئيسية">🚪</button>
+        <button id="btn-toggle-mic" class="btn-icon hidden" title="مايك: تحدث مع صاحبك">🎤</button>
+        <button id="btn-toggle-chat" class="btn-icon hidden" title="الشات">💬<span id="chat-unread-dot" class="chat-unread-dot hidden"></span></button>
+        <button id="btn-sound-toggle" class="btn-icon sound-btn" title="كتم/تشغيل الصوت">🔊</button>
+        <button id="btn-open-settings" class="btn-icon" style="font-size: 1.5rem; background: rgba(255,255,255,0.1);" title="الإعدادات">⚙️</button>
+      </div>
+      
+      <!-- User Profile Badge -->
+      <div id="user-profile-badge" class="user-profile-badge hidden">
+        <img class="user-avatar" src="/dond_app_icon.png" alt="">
+        <div class="user-info-col">
+          <span class="user-display-name"></span>
+          <span id="user-record-display" class="user-record">فوز: 0 | خسارة: 0</span>
+        </div>
+        <button id="btn-open-profile" class="btn-icon" title="تعديل البروفايل">✏️</button>
+      </div>
+
+      <div id="room-info-bar" class="room-info-bar hidden">
+        <div class="info-badge">
+          <span class="label">رقم الغرفة:</span>
+          <span id="display-room-id" class="value room-code">----</span>
+          <button id="btn-copy-code" class="btn-icon" title="نسخ الكود">📋</button>
+          <button id="btn-copy-invite-link" class="btn-icon" title="نسخ رابط الدعوة">🔗</button>
+        </div>
+        <div class="info-badge">
+          <span class="label">دورك:</span>
+          <span id="user-role-badge" class="role-pill">...</span>
+        </div>
+        <div class="info-badge">
+          <span id="spectators-count" class="value">👁️ 0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- LIVE TEXT CHAT DRAWER (host/guest only, hidden in lobby and vs AI) -->
+    <div id="chat-panel" class="chat-panel hidden">
+      <div class="chat-panel-header">
+        <span>💬 شات المباراة</span>
+        <button id="btn-close-chat" class="btn-icon close-modal">✕</button>
+      </div>
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" class="chat-form">
+        <input type="text" id="chat-input" placeholder="اكتب رسالة..." maxlength="200" autocomplete="off">
+        <button type="submit" class="btn-icon chat-send-btn" title="إرسال">➤</button>
+      </form>
+    </div>
+
+    <!-- Remote voice stream (host/guest voice call) -->
+    <audio id="remote-voice-audio" autoplay playsinline></audio>
+
+    <!-- Voice call volume - only shown while the call is active, always
+         visible inline (not tucked in a menu) so it's easy to find on mobile. -->
+    <div id="voice-volume-row" class="voice-volume-row hidden">
+      <span>🔊 صوت صاحبك:</span>
+      <input type="range" id="voice-volume-slider" min="0" max="100" value="100">
+      <span id="voice-volume-label">100%</span>
+    </div>
+
+    <!-- NOTIFICATION MESSAGES BANNER -->
+    <div id="notification-banner" class="notification-banner hidden"></div>
+
+    <!-- PWA INSTALL BANNER -->
+    <div id="pwa-install-banner" class="install-banner hidden">
+      <span>📲 حمّل اللعبة على هاتفك للعب بدون إنترنت وميزات أكثر!</span>
+      <div class="banner-actions">
+        <button id="btn-install-pwa" class="btn btn-primary btn-sm">تثبيت</button>
+        <button id="btn-dismiss-pwa" class="btn-icon">✕</button>
+      </div>
+    </div>
+
+    <!-- SW UPDATE BANNER -->
+    <div id="sw-update-banner" class="update-banner hidden">
+      <span>🔄 تحديث جديد متاح! اللعبة أصبحت أسرع وأفضل.</span>
+      <button id="btn-update-sw" class="btn btn-primary gold-btn btn-sm">تحديث الآن</button>
+    </div>
+
+    <!-- SPECTATOR BANNER -->
+    <div id="spectator-banner" class="spectator-banner hidden">
+      <span>👁️ أنت تتابع هذه اللعبة حالياً بصفة (مراقب). يمكنك مشاهدة الاختيارات والمباراة مباشرة!</span>
+    </div>
+
+    <!-- MAIN VIEWS CONTAINER -->
+    <main class="views-wrapper">
+
+      <!-- VIEW 1: LOBBY (CREATE / JOIN ROOM) -->
+      <section id="view-lobby" class="view-section active">
+        <div class="hero-card glass-card">
+          <div class="hero-header">
+            <h1 class="glow-title">تحدي <span class="gold-text">DEAL OR NO DEAL</span> ⚽</h1>
+            <p class="subtitle">كوّن فريقك المثالي من 4 لاعبين ومدرب، ثم تحدّى أصدقاءك أو البوت في مباراة مباشرة!</p>
+          </div>
+
+          <div id="auth-section" class="form-container">
+            <div class="live-pill" style="margin-bottom: 14px;">استوديو المباراة جاهز</div>
+
+            <!-- Name entry - always visible, no login required to play. The
+                 rest of the lobby (mode/AI/leaderboard/create/join) only
+                 reveals once a usable name exists - one decision at a time
+                 instead of the whole lobby dumped on screen together. -->
+            <div class="input-group">
+              <label for="player-name-input">اسمك في اللعبة <span class="required-star" style="color:var(--neon-red); font-weight:bold;">*</span> (3 حروف على الأقل):</label>
+              <input type="text" id="player-name-input" placeholder="أدخل اسمك هنا (مثال: الشلهوب)" minlength="3" maxlength="15" autocomplete="off" required>
+            </div>
+
+            <button type="button" id="btn-open-tutorial" class="link-line">📖 كيف تلعب؟</button>
+
+            <div id="lobby-stage-2" class="hidden">
+              <!-- Squad mode: classic (default, fast) vs full 11-a-side. Applies
+                   to whichever room/AI match you start next. -->
+              <div class="input-group squad-mode-group">
+                <label>نظام التشكيلة:</label>
+                <div class="squad-mode-toggle">
+                  <label class="squad-mode-option">
+                    <input type="radio" name="squad-mode" id="mode-classic" value="classic" checked>
+                    <span>⚡ سريع (4 لاعبين + مدرب)</span>
+                  </label>
+                  <label class="squad-mode-option">
+                    <input type="radio" name="squad-mode" id="mode-full" value="full">
+                    <span>🏟️ كامل (11 لاعب + مدرب — 4-3-3)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Optional Google Sign-In (shown only if Firebase Auth is configured with real keys) -->
+              <div class="auth-signed-out hidden">
+                <button id="btn-google-login" class="btn btn-primary gold-btn full-btn" style="margin-bottom: 10px; padding: 15px; font-size: 1.15rem;">
+                  <span style="background: white; padding: 2px 4px; border-radius: 4px; margin-left: 8px;">G</span>
+                  تسجيل الدخول بحساب Google
+                </button>
+                <button id="btn-guest-login" class="btn btn-secondary full-btn" style="margin-bottom: 20px; padding: 12px; font-size: 1.05rem;">
+                  👤 الدخول كضيف (بدون حساب)
+                </button>
+
+                <!-- Phone sign-in: two-step (send code -> verify code), same
+                     compat-SDK RecaptchaVerifier flow Firebase requires.
+                     Wired in /js/auth.js. -->
+                <div class="divider-text">أو</div>
+                <div id="phone-auth-step1">
+                  <div class="input-group">
+                    <input type="tel" id="phone-number-input" placeholder="رقم تليفونك (مثال: +201234567890)" style="margin-bottom: 8px;">
+                  </div>
+                  <button id="btn-send-phone-code" class="btn btn-secondary full-btn" style="margin-bottom: 10px;">
+                    📱 تسجيل الدخول برقم التليفون
+                  </button>
+                  <div id="recaptcha-container"></div>
+                </div>
+                <div id="phone-auth-step2" class="hidden">
+                  <div class="input-group">
+                    <input type="text" id="phone-code-input" placeholder="اكتب الكود اللي جالك بالرسالة" style="margin-bottom: 8px;">
+                  </div>
+                  <button id="btn-verify-phone-code" class="btn btn-primary gold-btn full-btn" style="margin-bottom: 20px;">
+                    ✅ تأكيد الكود
+                  </button>
+                </div>
+
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">* سجل دخولك لحفظ بياناتك وإحصائياتك في اللعبة</p>
+              </div>
+
+              <div class="auth-signed-in hidden">
+                <div style="text-align: left; margin-bottom: 20px;">
+                  <button id="btn-logout" class="btn-icon" style="font-size: 0.85rem; color: var(--neon-red); text-decoration: underline;">تسجيل خروج</button>
+                </div>
+              </div>
+
+              <!-- Single Player AI Fast Action -->
+              <div class="ai-btn-wrapper">
+                <button id="btn-play-ai" class="btn btn-ai full-btn">
+                  🤖 لعب فردي مباشر ضد البوت الذكي (vs AI)
+                </button>
+              </div>
+
+              <!-- Leaderboard Button (only meaningful once Firebase Auth is configured) -->
+              <button id="btn-leaderboard" class="btn btn-secondary full-btn hidden" style="margin-top: 15px;">
+                🏆 قائمة المتصدرين (Leaderboard)
+              </button>
+
+              <div class="actions-split">
+                <!-- Create Room Form -->
+                <div class="action-box">
+                  <div class="action-header">
+                    <span class="action-icon">👑</span>
+                    <div>
+                      <h3>1. إنشاء مباراة أونلاين</h3>
+                      <p>قم بإنشاء الغرفة واستلام الكود لمشاركته</p>
+                    </div>
+                  </div>
+                  <div class="input-stack">
+                    <input type="text" id="create-room-id" class="stylish-input" placeholder="كود الغرفة (مثال: 7777 - اختياري)" maxlength="6">
+                    <button id="btn-create-room" class="btn btn-primary gold-btn full-btn">👑 إنشاء المباراة كـ مستضيف</button>
+                  </div>
+                </div>
+
+                <div class="divider-text">أو</div>
+
+                <!-- Join Room Form -->
+                <div class="action-box">
+                  <div class="action-header">
+                    <span class="action-icon">⚽</span>
+                    <div>
+                      <h3>2. الانضمام لمباراة صديقك</h3>
+                      <p>أدخل كود الغرفة للانضمام فوراً</p>
+                    </div>
+                  </div>
+                  <div class="input-stack">
+                    <input type="text" id="join-room-id" class="stylish-input" placeholder="أدخل كود الغرفة هنا" maxlength="6">
+                    <button id="btn-join-room" class="btn btn-secondary full-btn">⚽ الانضمام للمباراة كـ ضيف</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: DRAFT STAGE (DEAL OR NO DEAL) -->
+      <section id="view-draft" class="view-section hidden">
+        <!-- Room Info Bar -->
+        <div class="room-info-bar" style="margin-bottom: 10px; display: flex; justify-content: center;">
+          <span class="room-id-display" style="background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 12px; font-weight: bold;">
+            الغرفة: <span id="current-room-id-display" class="gold-text">---</span>
+          </span>
+        </div>
+        
+        <!-- Turn Status Bar with Timer -->
+        <div class="turn-bar glass-card">
+          <div class="round-indicator">
+            <span class="position-badge" id="current-position-title">حارس المرمى 🧤</span>
+            <span class="turn-desc" id="current-turn-desc">جاري الانتظار...</span>
+          </div>
+          <div id="turn-timer-ring" class="turn-timer-ring hidden">
+            <svg class="timer-svg" viewBox="0 0 36 36">
+              <path class="timer-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path id="timer-circle-progress" class="timer-circle-progress" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span id="turn-timer-num" class="timer-num">15</span>
+          </div>
+
+          <div class="players-vs">
+            <span id="host-name-tag" class="player-tag host">المستضيف</span>
+            <span class="vs">VS</span>
+            <span id="guest-name-tag" class="player-tag guest">الضيف</span>
+          </div>
+        </div>
+
+        <!-- Floating Reaction Emoji & Chat Bar -->
+        <div id="live-emoji-bar" class="live-emoji-bar" style="flex-wrap: wrap; justify-content: center; max-width: 90%; gap: 5px;">
+          <button class="emoji-btn" data-emoji="🔥">🔥</button>
+          <button class="emoji-btn" data-emoji="😂">😂</button>
+          <button class="emoji-btn" data-emoji="😱">😱</button>
+          <button class="chat-btn btn-secondary" style="font-size:0.8rem; padding: 4px 8px; border-radius:12px;" data-msg="حظ سعيد!">حظ سعيد!</button>
+          <button class="chat-btn btn-secondary" style="font-size:0.8rem; padding: 4px 8px; border-radius:12px;" data-msg="تشكيلة نارية 🔥">تشكيلة نارية 🔥</button>
+          <button class="chat-btn btn-secondary" style="font-size:0.8rem; padding: 4px 8px; border-radius:12px;" data-msg="يا لها من بطاقة!">يا لها من بطاقة!</button>
+        </div>
+
+        <!-- Main Draft Play Area -->
+        <div class="draft-layout">
+          <!-- Left / Center: Briefcases & Deal Decisions -->
+          <div class="draft-stage glass-card">
+
+            <!-- Peek row: admin eye (visible only to one specific account,
+                 toggled by JS) and the "كشف البطاقات" helper card's use
+                 button (visible to whoever actually holds that card). -->
+            <div class="peek-bar">
+              <button id="btn-admin-reveal" class="btn-icon hidden" title="كشف البطاقات (أدمن)">👁️</button>
+              <button id="btn-use-reveal-cards" class="btn btn-secondary hidden">🔍 استخدام كشف البطاقات</button>
+            </div>
+
+            <div id="briefcases-container" class="briefcases-grid">
+              <!-- 4 Briefcases rendered dynamically -->
+            </div>
+
+            <!-- Action Decision Panel (Deal / No Deal buttons) -->
+            <div id="decision-panel" class="decision-panel hidden">
+              <div class="decision-card-preview" id="picked-card-preview">
+                <!-- Preview of selected briefcase -->
+              </div>
+              <div class="decision-buttons" id="decision-action-btns">
+                <button id="btn-deal" class="btn btn-deal">
+                  <span class="deal-icon">🤝</span>
+                  <span class="deal-text">DEAL / موافقة!</span>
+                </button>
+                <button id="btn-no-deal" class="btn btn-no-deal">
+                  <span class="deal-icon">❌</span>
+                  <span class="deal-text">NO DEAL / بطاقة أخرى!</span>
+                </button>
+                <!-- Only shown when the current player holds an unconsumed
+                     "force_swap" card - a third option next to Deal/No Deal,
+                     not a replacement for them. -->
+                <button id="btn-force-swap" class="btn btn-secondary hidden">
+                  <span class="deal-icon">🔄</span>
+                  <span class="deal-text">استبدال إجباري (حطّه عند الخصم)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pre-Match Protection Panel: shown to whoever holds an
+                 unconsumed "protection" card - offered BEFORE steal, since
+                 the shielded slot has to be on record before any steal
+                 target can be checked against it. Interaction is literal:
+                 press a player from your own lineup (rows on the right get
+                 a clickable highlight while this panel is open). -->
+            <div id="protect-action-panel" class="steal-panel hidden">
+              <div class="steal-alert">
+                <span>🛡️ معاك درع الحماية! دوس على لاعب من تشكيلتك (في القائمة على اليمين) عشان تحصّنه ضد السرقة:</span>
+              </div>
+              <button id="btn-skip-protect" class="btn btn-secondary">تخطي - من غير تحصين</button>
+            </div>
+
+            <!-- Shown to the other player(s) while someone decides protection -->
+            <div id="protect-waiting-panel" class="steal-panel hidden">
+              <span>⏳ الخصم بيقرر يحصّن لاعب بدرع الحماية... المباراة هتبدأ بعدها.</span>
+            </div>
+
+            <!-- Pre-Match Max Upgrade Panel: last pre-match phase (after
+                 protection and steal both resolve) - same "press a player
+                 from your own lineup" interaction as protection, but maxes
+                 their rating to 99 instead of shielding them. -->
+            <div id="upgrade-action-panel" class="steal-panel hidden">
+              <div class="steal-alert">
+                <span>🔥 معاك ترقية قصوى! دوس على لاعب من تشكيلتك (في القائمة على اليمين) عشان ترقّيه لأقصى قوة (99):</span>
+              </div>
+              <button id="btn-skip-upgrade" class="btn btn-secondary">تخطي - من غير ترقية</button>
+            </div>
+
+            <!-- Shown to the other player(s) while someone decides the upgrade -->
+            <div id="upgrade-waiting-panel" class="steal-panel hidden">
+              <span>⏳ الخصم بيقرر يرقّي لاعب لأقصى قوة... المباراة هتبدأ بعدها.</span>
+            </div>
+
+            <!-- Pre-Match Steal Panel: shown to whoever holds an unconsumed
+                 "steal" helper card once the draft is complete, before the
+                 match simulation starts (the result is computed all at once,
+                 so the swap must happen before it, not during). -->
+            <div id="steal-action-panel" class="steal-panel hidden">
+              <div class="steal-alert">
+                <span id="steal-instruction">🥷 لديك بطاقة (سرقة لاعب)! دوس على لاعب من تشكيلتك في القائمة على اليمين، وبعدين دوس على لاعب الخصم اللي عايز تاخده (المدرب مستثنى):</span>
+              </div>
+              <div class="steal-inputs">
+                <button id="btn-skip-steal" class="btn btn-secondary">تخطي</button>
+              </div>
+              <!-- The opponent's protected player (if any) is just excluded
+                   from selection below - this note names who and why. -->
+              <div id="steal-protected-note" class="steal-timer hidden"></div>
+              <!-- Shown instead of steal-inputs only when literally every
+                   opponent slot is unavailable (protected or empty). -->
+              <div id="steal-target-protected" class="steal-alert hidden">
+                <span>🛡️ مفيش لاعب متاح تسرقه دلوقتي عند الخصم!</span>
+                <button id="btn-skip-steal-protected" class="btn btn-secondary">تخطي</button>
+              </div>
+            </div>
+
+            <!-- Steal confirmation - a real confirm step (not the browser's
+                 confirm()) before the swap commits, per the ask that this
+                 feel like a deliberate decision, not an accidental tap. -->
+            <div id="steal-confirm-modal" class="modal-overlay hidden">
+              <div class="modal-content glass-card">
+                <div class="modal-header">
+                  <h2 class="glow-title">🥷 تأكيد التبادل</h2>
+                  <button id="btn-steal-confirm-close" class="btn-icon close-modal">✕</button>
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                  <p id="steal-confirm-text">هتبدل لاعبك بلاعب الخصم؟</p>
+                  <div style="display:flex; gap:10px; justify-content:center; margin-top:16px;">
+                    <button id="btn-steal-confirm-yes" class="btn btn-primary">✅ اتأكد وبدّل</button>
+                    <button id="btn-steal-confirm-again" class="btn btn-secondary">🔄 اختار لاعب غيره</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Shown to the other player(s) while someone decides a steal -->
+            <div id="steal-waiting-panel" class="steal-panel hidden">
+              <span>⏳ الخصم بيقرر يستخدم بطاقة السرقة ولا لأ... المباراة هتبدأ فوراً بعدها.</span>
+            </div>
+
+          </div>
+
+          <!-- Right: Lineup Strip - both squads listed as full-width rows on
+               one pitch-textured card, guest on top, host below a halfway
+               divider, instead of circle tokens positioned by percentage
+               (which could still collide at narrow widths). Rows injected
+               by renderLineupStrip in app.js. -->
+          <div class="squads-sidebar">
+            <div class="lineup-card glass-card">
+              <!-- Closed by default - the open briefcase is the one thing
+                   that should compete for attention during a pick, not a
+                   full always-visible roster. -->
+              <button type="button" id="btn-toggle-lineup" class="collapse-toggle">
+                <span id="lineup-toggle-label">تشكيلتك حتى الآن</span>
+                <span class="chev">▾</span>
+              </button>
+              <div id="lineup-collapse-body" class="collapse-body">
+                <div class="lineup-strip" id="lineup-strip">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: MATCH CENTER - one persistent screen for live AND full-time
+           (no separate popup modal), tabbed like a real broadcast app. -->
+      <section id="view-simulation" class="view-section hidden">
+        <div class="match-center-card glass-card">
+
+          <!-- Header: status pill + scoreboard -->
+          <div class="mc-header">
+            <div class="mc-status-pill" id="mc-status-pill">
+              <span class="mc-live-dot"></span>
+              <span id="mc-status-text">مباشر LIVE</span>
+            </div>
+            <div class="mc-teams">
+              <div class="mc-team host">
+                <div class="mc-badge host">👑</div>
+                <span id="sim-host-name" class="mc-team-name">المستضيف</span>
+              </div>
+              <!-- guest-score first, host-score last: forced direction:ltr
+                   below renders this pair strictly left-to-right, so the
+                   guest number lands on the left (next to the guest team
+                   block) and the host number on the right (next to host) -
+                   matching each score to its team instead of the RTL bidi
+                   algorithm silently swapping which number looks like it
+                   belongs to which side. -->
+              <div class="mc-score">
+                <span id="sim-guest-score">0</span><span class="mc-colon">:</span><span id="sim-host-score">0</span>
+              </div>
+              <div class="mc-team guest">
+                <div class="mc-badge guest">⚽</div>
+                <span id="sim-guest-name" class="mc-team-name">الضيف</span>
+              </div>
+            </div>
+            <div class="mc-minute"><span id="sim-clock">00'</span></div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="mc-tabs">
+            <button class="mc-tab" data-tab="summary">الملخص</button>
+            <button class="mc-tab active" data-tab="events">الأحداث</button>
+            <button class="mc-tab" data-tab="stats">الإحصائيات</button>
+            <button class="mc-tab" data-tab="lineup">التشكيلة</button>
+          </div>
+
+          <!-- Tab: الملخص (trophy / winner / MVP / save+rematch - filled in once the match finishes) -->
+          <div class="mc-tab-panel hidden" id="mc-panel-summary">
+            <div id="mc-summary-pending" class="summary-pending">⚽ المباراة لسه شغالة... الملخص هيظهر هنا فور ما تنتهي.</div>
+            <div id="mc-summary-content" class="hidden">
+              <span class="trophy-anim">🏆</span>
+              <h2 id="winner-title" class="gold-text">الفائز بالمباراة!</h2>
+              <div id="final-score-display" class="final-score-badge">0 - 0</div>
+              <p id="winner-sub-msg">تهانينا على الفوز والتكافؤ التكتيكي!</p>
+              <div class="mvp-section">
+                <span class="mvp-title">🌟 أفضل لاعب في المباراة:</span>
+                <span id="mvp-player-name" class="mvp-name">---</span>
+              </div>
+              <button id="btn-save-match" class="btn btn-secondary full-btn" style="margin-bottom: 10px;">💾 حفظ صورة المباراة</button>
+              <button id="btn-rematch" class="btn btn-primary gold-btn full-btn">🔄 لعب مباراة جديدة (إعادة التحدي)</button>
+            </div>
+          </div>
+
+          <!-- Tab: الأحداث (center-spine timeline, host branches right / guest branches left) -->
+          <div class="mc-tab-panel" id="mc-panel-events">
+            <div id="sim-events-list" class="spine-wrap">
+              <!-- events injected dynamically -->
+            </div>
+          </div>
+
+          <!-- Tab: الإحصائيات -->
+          <div class="mc-tab-panel hidden" id="mc-panel-stats">
+            <div class="stats-table">
+              <div class="stat-row">
+                <span id="stat-host-pos" class="stat-val-host">50%</span>
+                <span class="stat-label-text">الاستحواذ ⚽</span>
+                <span id="stat-guest-pos" class="stat-val-guest">50%</span>
+              </div>
+              <div class="stat-bar-container">
+                <div id="bar-host-pos" class="stat-bar-host" style="width: 50%;"></div>
+                <div id="bar-guest-pos" class="stat-bar-guest" style="width: 50%;"></div>
+              </div>
+
+              <div class="stat-row">
+                <span id="stat-host-shots" class="stat-val-host">0</span>
+                <span class="stat-label-text">إجمالي التسديدات 🥅</span>
+                <span id="stat-guest-shots" class="stat-val-guest">0</span>
+              </div>
+
+              <div class="stat-row">
+                <span id="stat-host-ontarget" class="stat-val-host">0</span>
+                <span class="stat-label-text">تسديدات على المرمى 🎯</span>
+                <span id="stat-guest-ontarget" class="stat-val-guest">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: التشكيلة (same lineup-strip component as the draft view) -->
+          <div class="mc-tab-panel hidden" id="mc-panel-lineup">
+            <div class="lineup-strip" id="mc-lineup-strip"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- PROFILE SETTINGS MODAL - name/photo/bio, shared by both games via
+           /js/profile-settings.js. Name and photo changes are rate-limited
+           to once/week (see UserProfileManager.canChangeName/canChangePhoto). -->
+      <div id="profile-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-card">
+          <div class="modal-header">
+            <h2 class="glow-title">👤 البروفايل بتاعك</h2>
+            <button id="btn-close-profile" class="btn-icon close-modal">✕</button>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <img id="profile-avatar-preview" class="user-avatar" style="width:80px;height:80px;margin-bottom:10px;" src="/dond_app_icon.png" alt="">
+            <div class="input-group">
+              <label for="profile-name-input">اسمك:</label>
+              <input type="text" id="profile-name-input" maxlength="24" autocomplete="off">
+              <div id="profile-name-hint" class="field-hint"></div>
+              <button id="btn-save-name" class="btn btn-secondary" style="margin-top:6px;">💾 حفظ الاسم</button>
+            </div>
+            <div class="input-group" style="margin-top:16px;">
+              <label for="profile-photo-file">الصورة (رفع ملف):</label>
+              <input type="file" id="profile-photo-file" accept="image/*">
+              <div id="profile-photo-hint" class="field-hint"></div>
+            </div>
+            <div class="input-group" style="margin-top:16px;">
+              <label for="profile-bio-input">وصف حسابك (بايو):</label>
+              <textarea id="profile-bio-input" maxlength="140" rows="3" style="width:100%; resize:none;"></textarea>
+              <button id="btn-save-bio" class="btn btn-secondary" style="margin-top:6px;">💾 حفظ الوصف</button>
+            </div>
+            <div class="input-group" style="margin-top:16px;">
+              <label>البادجات بتاعتك:</label>
+              <div id="profile-badges-list" class="profile-badges-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD MODAL -->
+      <div id="leaderboard-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-card">
+          <div class="modal-header">
+            <h2 class="glow-title">🏆 قائمة المتصدرين</h2>
+            <button id="btn-close-leaderboard" class="btn-icon close-modal">✕</button>
+          </div>
+          <div class="lb-tabs" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: -10px; margin-bottom: 15px;">
+            <button id="lb-tab-dond-classic" class="btn-secondary active" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem;">⚡ صفقة سريع</button>
+            <button id="lb-tab-dond-full" class="btn-secondary" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; opacity: 0.5;">🏟️ صفقة كامل</button>
+            <button id="lb-tab-mazad-classic" class="btn-secondary" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; opacity: 0.5;">🔨 مزاد سريع</button>
+            <button id="lb-tab-mazad-full" class="btn-secondary" style="padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; opacity: 0.5;">🔨 مزاد كامل</button>
+          </div>
+          <div class="modal-body">
+            <div id="leaderboard-list" class="leaderboard-list">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- TUTORIAL MODAL -->
+      <div id="tutorial-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-card">
+          <div class="modal-header">
+            <h2 class="glow-title">📖 كيف تلعب؟</h2>
+            <button id="btn-close-tutorial" class="btn-icon close-modal">✕</button>
+          </div>
+          <div class="modal-body" style="text-align: right; line-height: 1.6;">
+            <p>مرحباً بك في تحدي <strong>Deal or No Deal Football!</strong></p>
+            <ul style="padding-right: 20px; margin-top: 10px; color: var(--text-muted);">
+              <li>1. في كل جولة، اختار إحدى الحقائب الغامضة.</li>
+              <li>2. بعد اختيارك، البوت هيقدم لك عرض (لاعب بمركز معين أو بطاقة مساعدة).</li>
+              <li>3. اضغط <strong>Deal (قبول)</strong> لأخذ اللاعب للتشكيلة بتاعتك، أو <strong>No Deal (رفض)</strong> لفتح حقيبة تانية.</li>
+              <li>4. جمع أقوى تشكيلة من 4 لاعبين ومدرب للفوز بالمحاكاة ضد الخصم!</li>
+            </ul>
+            <button id="btn-start-tutorial" class="btn btn-primary gold-btn full-btn" style="margin-top: 20px;">فهمت، يلا نبدأ! 🚀</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS MODAL -->
+      <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-card">
+          <div class="modal-header">
+            <h2 class="glow-title">⚙️ الإعدادات</h2>
+            <button id="btn-close-settings" class="btn-icon close-modal">✕</button>
+          </div>
+          <div class="modal-body" style="text-align: right; line-height: 1.6;">
+            <div style="margin-bottom: 20px;">
+              <label for="volume-slider" style="display:block; margin-bottom: 5px;">مستوى الصوت المؤثرات:</label>
+              <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 20px;">
+              <label style="display:flex; align-items:center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" id="theme-toggle">
+                <span>تفعيل وضع توفير البطارية (إلغاء التأثيرات الزجاجية)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Professional Footer -->
+    <footer class="app-footer">
+      <p>جميع الحقوق محفوظة &copy; 2026 <strong>Deal Or No Deal Football Draft</strong> ⚽</p>
+      <p style="font-size: 0.75rem; margin-top: 4px; opacity: 0.7;">مشغل بواسطة محرك Firebase المتزامن وبث المحاكاة المباشر</p>
+      <p style="font-size: 0.75rem; margin-top: 4px;">صُنعت بواسطة <strong style="color: var(--gold-primary);">Soliman Ahmed</strong></p>
+    </footer>
+
+  </div>
+
+  <!-- Firebase SDK (Compat Version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+  <!-- Shared helpers (esc() etc) - must load before anything that renders
+       Firebase data into innerHTML. -->
+  <script src="/js/utils.js"></script>
+
+  <!-- Game Engines & Sound FX -->
+  <script src="/js/sound-effects.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/user-profile.js"></script>
+  <script src="/js/profile-settings.js"></script>
+  <script src="/js/leaderboard.js"></script>
+  <!-- Generated from data/players.json by scripts/sync-players.js (npm run build).
+       MUST stay before firebase-engine.js, which reads window.PLAYER_DATABASE. -->
+  <script src="/js/player-database.js"></script>
+  <script src="/js/firebase-engine.js"></script>
+  <script src="/js/voice-chat.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
+

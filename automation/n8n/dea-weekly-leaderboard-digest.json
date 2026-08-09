@@ -1,0 +1,58 @@
+{
+  "name": "dea - Weekly Leaderboard Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "weeks", "weeksInterval": 1 }
+          ]
+        }
+      },
+      "id": "trigger1",
+      "name": "Every Week",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-200, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://cuafa-9f3b6-default-rtdb.firebaseio.com/users.json",
+        "options": {}
+      },
+      "id": "getUsers",
+      "name": "Get all users",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// users.json is { uid: { profile: { name, stats: { dond_classic: {wins,...}, ... } } }, ... } or null.\nconst CATEGORIES = [\n  { key: 'dond_classic', label: '⚡ صفقة سريع' },\n  { key: 'dond_full', label: '🏟️ صفقة كامل' },\n  { key: 'mazad_classic', label: '🔨 مزاد سريع' },\n  { key: 'mazad_full', label: '🔨 مزاد كامل' }\n];\n\nconst users = $input.first().json || {};\nconst digest = {};\n\nfor (const cat of CATEGORIES) {\n  const rows = [];\n  for (const uid of Object.keys(users)) {\n    const profile = users[uid] && users[uid].profile;\n    const stat = profile && profile.stats && profile.stats[cat.key];\n    if (stat && stat.wins > 0) {\n      rows.push({ name: profile.name || 'unknown', wins: stat.wins, losses: stat.losses || 0, totalMatches: stat.totalMatches || 0 });\n    }\n  }\n  rows.sort((a, b) => b.wins - a.wins);\n  digest[cat.key] = { label: cat.label, top: rows.slice(0, 5) };\n}\n\nreturn [{ json: { generatedAt: new Date().toISOString(), categories: digest } }];"
+      },
+      "id": "buildDigest",
+      "name": "Build Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 200]
+    },
+    {
+      "parameters": {
+        "content": "## بعد Build Digest\nضيف نود إشعار هنا (Slack / Discord / Telegram / Email) وربطه بمخرج Build Digest - كل تصنيف من الـ4 عنده top 5 لاعبين جاهزين.\n\nمفيش وجهة إرسال متحطة لأن المستخدم ماحددش. لو مفيش لاعبين لسه في تصنيف معين، top هترجع array فاضية - النود اللي هتضيفه لازم يتعامل مع الحالة دي.",
+        "height": 220,
+        "width": 340
+      },
+      "id": "note1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [280, -40]
+    }
+  ],
+  "connections": {
+    "Every Week": { "main": [[{ "node": "Get all users", "type": "main", "index": 0 }]] },
+    "Get all users": { "main": [[{ "node": "Build Digest", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

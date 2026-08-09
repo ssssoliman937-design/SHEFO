@@ -1,0 +1,132 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "dond_rooms": {
+      ".read": true,
+      "$roomId": {
+        ".read": true,
+        ".write": "auth == null || root.child('users/' + auth.uid + '/profile/isBanned').val() != true",
+
+        "roomId": { ".validate": "newData.isString() && newData.val() == $roomId" },
+        "status": { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "isAiMode": { ".validate": "newData.isBoolean()" },
+        "currentTurn": { ".validate": "newData.val() == 'host' || newData.val() == 'guest'" },
+        "spectatorsCount": { ".validate": "newData.isNumber()" },
+        "winner": { ".validate": "newData.val() == 'host' || newData.val() == 'guest' || newData.val() == 'draw'" },
+        "stealBy": { ".validate": "newData.val() == 'host' || newData.val() == 'guest'" },
+        "protectBy": { ".validate": "newData.val() == 'host' || newData.val() == 'guest'" },
+        "upgradeBy": { ".validate": "newData.val() == 'host' || newData.val() == 'guest'" },
+
+        "host": {
+          "name": { ".validate": "newData.isString() && newData.val().length <= 24" },
+          "id": { ".validate": "newData.isString() && newData.val().length <= 40" }
+        },
+        "guest": {
+          "name": { ".validate": "newData.isString() && newData.val().length <= 24" },
+          "id": { ".validate": "newData.isString() && newData.val().length <= 40" }
+        },
+
+        "lastEmoji": {
+          "symbol": { ".validate": "newData.isString() && newData.val().length <= 8" },
+          "senderId": { ".validate": "newData.isString()" },
+          "timestamp": { ".validate": "newData.isNumber()" }
+        },
+        "chat": {
+          "$idx": {
+            "text": { ".validate": "newData.isString() && newData.val().length <= 220" },
+            "senderName": { ".validate": "newData.isString() && newData.val().length <= 24" }
+          }
+        },
+
+        "$other": { ".validate": true }
+      }
+    },
+
+    "mazad_rooms": {
+      ".read": true,
+      "$roomId": {
+        ".read": true,
+        ".write": "auth == null || root.child('users/' + auth.uid + '/profile/isBanned').val() != true",
+
+        "roomId": { ".validate": "newData.isString() && newData.val() == $roomId" },
+        "status": { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "isAiMode": { ".validate": "newData.isBoolean()" },
+        "squadMode": { ".validate": "newData.val() == 'classic' || newData.val() == 'full'" },
+        "budgetStart": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 2000000000" },
+        "currentRoundOpener": { ".validate": "newData.val() == 'host' || newData.val() == 'guest'" },
+        "winner": { ".validate": "newData.val() == 'host' || newData.val() == 'guest' || newData.val() == 'draw'" },
+
+        "host": {
+          "name": { ".validate": "newData.isString() && newData.val().length <= 24" },
+          "id": { ".validate": "newData.isString() && newData.val().length <= 40" }
+        },
+        "guest": {
+          "name": { ".validate": "newData.isString() && newData.val().length <= 24" },
+          "id": { ".validate": "newData.isString() && newData.val().length <= 40" }
+        },
+        "chat": {
+          "$idx": {
+            "text": { ".validate": "newData.isString() && newData.val().length <= 220" },
+            "senderName": { ".validate": "newData.isString() && newData.val().length <= 24" }
+          }
+        },
+
+        "$other": { ".validate": true }
+      }
+    },
+
+    "users": {
+      ".read": true,
+      ".indexOn": [
+        "profile/wins",
+        "profile/stats/dond_classic/wins",
+        "profile/stats/dond_full/wins",
+        "profile/stats/mazad_classic/wins",
+        "profile/stats/mazad_full/wins"
+      ],
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && (auth.uid == $uid || root.child('users/' + auth.uid + '/profile/role').val() == 'admin' || auth.token.email == 'slyman776688@gmail.com' || auth.token.phone_number == '+201146131457')",
+        "profile": {
+          "name": { ".validate": "newData.isString() && newData.val().length <= 24" },
+          "email": { ".validate": "newData.isString() && newData.val().length <= 100" },
+          "phone": { ".validate": "newData.isNull() || (newData.isString() && newData.val().length <= 20)" },
+          "photoURL": { ".validate": "newData.isString() && newData.val().matches(/^https:\\/\\//)" },
+          "bio": { ".validate": "newData.isString() && newData.val().length <= 140" },
+          "lastNameChange": { ".validate": "newData.isNumber()" },
+          "lastPhotoChange": { ".validate": "newData.isNumber()" },
+          "wins": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "losses": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "draws": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "totalMatches": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "coins": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "lastPlayed": { ".validate": "newData.isNumber()" },
+          "lastUpdated": { ".validate": true },
+          "role": { ".validate": "root.child('users/' + auth.uid + '/profile/role').val() == 'admin' || auth.token.email == 'slyman776688@gmail.com' || auth.token.phone_number == '+201146131457' || !newData.exists() || newData.val() == data.val()" },
+          "isBanned": { ".validate": "root.child('users/' + auth.uid + '/profile/role').val() == 'admin' || auth.token.email == 'slyman776688@gmail.com' || auth.token.phone_number == '+201146131457' || !newData.exists() || newData.val() == data.val()" },
+          "hideFromLeaderboard": { ".validate": "root.child('users/' + auth.uid + '/profile/role').val() == 'admin' || auth.token.email == 'slyman776688@gmail.com' || auth.token.phone_number == '+201146131457' || !newData.exists() || newData.val() == data.val()" },
+          "stats": {
+            "$gameKey": {
+              "wins": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "losses": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "draws": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "totalMatches": { ".validate": "newData.isNumber() && newData.val() >= 0" }
+            }
+          }
+        }
+      }
+    },
+
+    "recent_matches": {
+      ".read": true,
+      "$roomId": {
+        ".write": "auth == null || root.child('users/' + auth.uid + '/profile/isBanned').val() != true",
+        ".validate": "newData.hasChildren(['game', 'hostName', 'guestName', 'hostGoals', 'guestGoals', 'winner', 'timestamp'])"
+      }
+    }
+  }
+}

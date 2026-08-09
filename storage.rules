@@ -1,0 +1,22 @@
+// Firebase Storage rules for profile photo uploads. Paste into Firebase
+// Console -> Storage -> Rules -> Publish, or deploy with
+// `firebase deploy --only storage` (firebase.json points here).
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Avatars: only the signed-in owner can write their own file, capped at
+    // 2MB and images only. Publicly readable (avatars show on the
+    // leaderboard/room UI for every visitor, signed in or not).
+    match /avatars/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    // Everything else stays closed.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
