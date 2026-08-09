@@ -383,9 +383,50 @@
               🪙 الكوينز المتاحة: <b style="color:var(--gold);" id="dash-stat-coins">0</b>
             </div>
 
+            <!-- Account Settings Edit Form -->
+            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:12px; padding:15px; margin-top:20px; text-align:right;">
+              <h4 style="margin:0 0 12px; color:var(--gold); font-size:0.95rem; font-weight:bold;">⚙️ تعديل بيانات الحساب:</h4>
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;" id="dash-edit-fields-grid">
+                <div>
+                  <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:6px;">الاسم الجديد:</label>
+                  <div style="display:flex; gap:6px;">
+                    <input type="text" id="dash-edit-name" maxlength="15" style="flex:1; background:rgba(0,0,0,0.4); border:1px solid var(--border-glass); border-radius:8px; padding:6px 10px; color:#fff; font-size:0.85rem;" placeholder="اسمك الجديد...">
+                    <button type="button" id="dash-btn-save-name" style="background:var(--teal); color:#000; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">حفظ</button>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:6px;">رفع صورة / رابط صورة:</label>
+                  <div style="display:flex; flex-direction:column; gap:6px;">
+                    <input type="file" id="dash-edit-photo-file" accept="image/*" style="font-size:0.75rem; color:var(--text-muted); border:1px solid var(--border-glass); border-radius:8px; padding:3px; background:rgba(0,0,0,0.2);">
+                    <div style="display:flex; gap:6px;">
+                      <input type="text" id="dash-edit-photo-url" style="flex:1; background:rgba(0,0,0,0.4); border:1px solid var(--border-glass); border-radius:8px; padding:6px 10px; color:#fff; font-size:0.8rem;" placeholder="أو رابط صورة https://...">
+                      <button type="button" id="dash-btn-save-photo" style="background:var(--teal); color:#000; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">تحديث</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- User Badges -->
             <div style="margin-top:20px;">
-              <h4 style="margin:0 0 10px; color:var(--gold);">🎖️ البادجات المحققة:</h4>
+              <h4 style="margin:0 0 10px; color:var(--gold); text-align:right;">🎖️ البادجات المحققة:</h4>
               <div id="dash-badges-list" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+            </div>
+
+            <!-- User Ranks -->
+            <div style="margin-top:25px; text-align:right;">
+              <h4 style="margin:0 0 10px; color:var(--gold);">🏆 تصنيفك على الموقع:</h4>
+              <div id="dash-user-ranks-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap:8px;">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+
+            <!-- Match History -->
+            <div style="margin-top:25px; text-align:right;">
+              <h4 style="margin:0 0 10px; color:var(--gold);">⚽ سجل مبارياتك الأخيرة:</h4>
+              <div id="dash-user-matches-list" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto; padding-left:4px;">
+                <!-- Loaded dynamically -->
+              </div>
             </div>
 
             <div id="dash-admin-btn-container" class="hidden" style="margin-top:30px; text-align:center;">
@@ -524,6 +565,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -870,6 +912,16 @@
         } else {
           adminBtnRow.classList.add('hidden');
         }
+
+        // Prefill name & photo edit inputs
+        document.getElementById('dash-edit-name').value = currentUserProfile.name || '';
+        document.getElementById('dash-edit-photo-url').value = currentUserProfile.photoURL || '';
+
+        // Load ranks & match history
+        if (authUser) {
+          fetchUserRanks(authUser.uid);
+          fetchUserMatchHistory(authUser.uid);
+        }
       });
 
       btnCloseDashboard?.addEventListener('click', () => {
@@ -886,6 +938,196 @@
         adminView.classList.add('hidden');
         userView.classList.remove('hidden');
       });
+
+      // Save name action in dashboard
+      document.getElementById('dash-btn-save-name')?.addEventListener('click', async () => {
+        const newName = document.getElementById('dash-edit-name').value.trim();
+        if (!newName) {
+          alert('❌ الاسم لا يمكن أن يكون فارغاً!');
+          return;
+        }
+        if (newName.length < 3) {
+          alert('❌ الاسم يجب أن يكون 3 أحرف على الأقل!');
+          return;
+        }
+        const authUser = firebase.auth().currentUser;
+        if (!authUser) return;
+
+        try {
+          await db.ref(`users/${authUser.uid}/profile`).update({ name: newName });
+          currentUserProfile.name = newName;
+          document.getElementById('dash-user-name-title').textContent = newName;
+          document.getElementById('hub-user-name').textContent = newName;
+          alert('✅ تم حفظ الاسم بنجاح!');
+        } catch (err) {
+          console.error(err);
+          alert('❌ فشل حفظ الاسم: تأكد من الصلاحيات.');
+        }
+      });
+
+      // Save photo url action in dashboard
+      document.getElementById('dash-btn-save-photo')?.addEventListener('click', async () => {
+        const newPhotoURL = document.getElementById('dash-edit-photo-url').value.trim();
+        if (!newPhotoURL) {
+          alert('❌ رابط الصورة فارغ!');
+          return;
+        }
+        if (!/^https:\/\//i.test(newPhotoURL)) {
+          alert('❌ يجب إدخال رابط آمن يبدأ بـ https://');
+          return;
+        }
+        const authUser = firebase.auth().currentUser;
+        if (!authUser) return;
+
+        try {
+          await db.ref(`users/${authUser.uid}/profile`).update({ photoURL: newPhotoURL });
+          currentUserProfile.photoURL = newPhotoURL;
+          document.getElementById('dash-user-avatar').src = newPhotoURL;
+          document.getElementById('hub-user-avatar').src = newPhotoURL;
+          alert('✅ تم تحديث الصورة الشخصية بنجاح!');
+        } catch (err) {
+          console.error(err);
+          alert('❌ فشل تحديث الصورة: تأكد من الصلاحيات.');
+        }
+      });
+
+      // Photo file upload action in dashboard
+      document.getElementById('dash-edit-photo-file')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+          alert('❌ حجم الصورة كبير جداً! الحد الأقصى 2 ميجا.');
+          return;
+        }
+        const authUser = firebase.auth().currentUser;
+        if (!authUser) return;
+
+        try {
+          const storageRef = firebase.storage().ref(`profiles/${authUser.uid}/${Date.now()}_${file.name}`);
+          const uploadTask = await storageRef.put(file);
+          const downloadURL = await uploadTask.ref.getDownloadURL();
+          await db.ref(`users/${authUser.uid}/profile`).update({ photoURL: downloadURL });
+
+          currentUserProfile.photoURL = downloadURL;
+          document.getElementById('dash-user-avatar').src = downloadURL;
+          document.getElementById('hub-user-avatar').src = downloadURL;
+          document.getElementById('dash-edit-photo-url').value = downloadURL;
+          alert('✅ تم رفع وتحديث صورتك الشخصية بنجاح!');
+        } catch (err) {
+          console.error(err);
+          alert('❌ فشل رفع الصورة: تأكد من الصلاحيات والاتصال.');
+        } finally {
+          e.target.value = '';
+        }
+      });
+
+      async function fetchUserRanks(uid) {
+        const container = document.getElementById('dash-user-ranks-container');
+        if (!container) return;
+        container.innerHTML = '<div style="grid-column: span 4; text-align:center; font-size:0.8rem; color:var(--text-muted);">جاري تحميل التصنيف...</div>';
+
+        try {
+          const snap = await db.ref('users').once('value');
+          const allUsers = [];
+          snap.forEach(child => {
+            allUsers.push({ uid: child.key, ...child.val() });
+          });
+
+          const categories = [
+            { key: 'dond_classic', label: 'صفقة سريع' },
+            { key: 'dond_full', label: 'صفقة كامل' },
+            { key: 'mazad_classic', label: 'مزاد سريع' },
+            { key: 'mazad_full', label: 'مزاد كامل' }
+          ];
+
+          container.innerHTML = categories.map(cat => {
+            const sorted = allUsers
+              .filter(u => u.profile && u.profile.stats && u.profile.stats[cat.key])
+              .sort((a, b) => (b.profile.stats[cat.key].wins || 0) - (a.profile.stats[cat.key].wins || 0));
+
+            const rankIndex = sorted.findIndex(u => u.uid === uid);
+            const rank = rankIndex !== -1 ? rankIndex + 1 : '---';
+            const wins = rankIndex !== -1 ? sorted[rankIndex].profile.stats[cat.key].wins || 0 : 0;
+            return `
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:12px; padding:10px; text-align:center;">
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">${cat.label}</div>
+                <div style="font-family:var(--font-nums); font-size:1.15rem; font-weight:bold; color:var(--gold);">#${rank}</div>
+                <div style="font-size:0.7rem; color:var(--teal);">${wins} فوز</div>
+              </div>
+            `;
+          }).join('');
+        } catch (err) {
+          console.error(err);
+          container.innerHTML = '<div style="grid-column: span 4; text-align:center; font-size:0.8rem; color:var(--red);">فشل تحميل التصنيف</div>';
+        }
+      }
+
+      async function fetchUserMatchHistory(uid) {
+        const container = document.getElementById('dash-user-matches-list');
+        if (!container) return;
+        container.innerHTML = '<div style="text-align:center; font-size:0.8rem; color:var(--text-muted); padding:10px;">جاري تحميل سجل المباريات...</div>';
+
+        try {
+          const snap = await db.ref('recent_matches').orderByChild('timestamp').limitToLast(50).once('value');
+          const matches = [];
+          snap.forEach(child => {
+            matches.push({ id: child.key, ...child.val() });
+          });
+
+          matches.reverse();
+
+          const myName = currentUserProfile.name || '';
+          const myMatches = matches.filter(m => 
+            m.hostId === uid || m.guestId === uid || 
+            (myName && (m.hostName === myName || m.guestName === myName))
+          );
+
+          if (myMatches.length === 0) {
+            container.innerHTML = '<div style="text-align:center; font-size:0.8rem; color:var(--text-muted); padding:15px;">لا يوجد مباريات مسجلة مؤخراً</div>';
+            return;
+          }
+
+          container.innerHTML = myMatches.map(m => {
+            const isHost = m.hostId === uid || (myName && m.hostName === myName);
+            const myScore = isHost ? m.hostGoals : m.guestGoals;
+            const oppScore = isHost ? m.guestGoals : m.hostGoals;
+            const oppName = isHost ? m.guestName : m.hostName;
+
+            let resultText = '';
+            let resultColor = '#fff';
+            if (m.winner === 'draw') {
+              resultText = 'تعادل 🤝';
+              resultColor = 'var(--text-muted)';
+            } else if ((m.winner === 'host' && isHost) || (m.winner === 'guest' && !isHost)) {
+              resultText = 'فوز 👑';
+              resultColor = 'var(--teal)';
+            } else {
+              resultText = 'خسارة 💔';
+              resultColor = 'var(--red)';
+            }
+
+            const date = new Date(m.timestamp).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const gameLabel = m.game === 'mazad' ? 'المزاد' : 'صفقة';
+            const modeLabel = m.mode === 'full' ? 'كامل' : 'سريع';
+
+            return `
+              <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-glass); border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;">
+                <div style="display:flex; flex-direction:column; gap:2px; text-align:right;">
+                  <span style="font-weight:bold; color:#fff;">ضد: ${oppName}</span>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">${gameLabel} (${modeLabel}) • ${date}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-family:var(--font-nums); font-weight:bold; font-size:1rem; color:#fff;">${myScore} - ${oppScore}</span>
+                  <span style="font-weight:bold; color:${resultColor}; font-size:0.8rem; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:6px;">${resultText}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } catch (err) {
+          console.error(err);
+          container.innerHTML = '<div style="text-align:center; font-size:0.8rem; color:var(--red); padding:10px;">فشل تحميل سجل المباريات</div>';
+        }
+      }
 
       async function loadAdminData() {
         usersTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري تحميل بيانات اللاعبين... ⏳</td></tr>';

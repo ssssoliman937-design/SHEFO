@@ -1446,14 +1446,18 @@ const FirebaseEngine = {
         else if (guestGoals > hostGoals) winner = 'guest';
 
         const gameType = (roomsPath || 'dond_rooms') === 'mazad_rooms' ? 'mazad' : 'dond';
-        const p1Name = room.host ? room.host.name : 'مستضيف';
-        const p2Name = room.guest ? room.guest.name : 'ضيف';
+        const p1Name = roomState.host ? roomState.host.name : 'مستضيف';
+        const p2Name = roomState.guest ? roomState.guest.name : 'ضيف';
+        const p1Id = roomState.host ? roomState.host.id : null;
+        const p2Id = roomState.guest ? roomState.guest.id : null;
 
         db.ref('recent_matches/' + roomId).set({
           game: gameType,
-          mode: room.squadMode || 'classic',
+          mode: roomState.squadMode || 'classic',
           hostName: p1Name,
           guestName: p2Name,
+          hostId: p1Id,
+          guestId: p2Id,
           hostGoals: hostGoals,
           guestGoals: guestGoals,
           winner: winner,
