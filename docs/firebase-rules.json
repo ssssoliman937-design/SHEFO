@@ -94,7 +94,7 @@
         "profile": {
           "name": { ".validate": "newData.isString() && newData.val().length <= 24" },
           "email": { ".validate": "newData.isString() && newData.val().length <= 100" },
-          "phone": { ".validate": "newData.isNull() || (newData.isString() && newData.val().length <= 20)" },
+          "phone": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 20)" },
           "photoURL": { ".validate": "newData.isString() && newData.val().matches(/^https:\\/\\//)" },
           "bio": { ".validate": "newData.isString() && newData.val().length <= 140" },
           "lastNameChange": { ".validate": "newData.isNumber()" },

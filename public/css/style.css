@@ -2430,3 +2430,9 @@ body:has(#sw-update-banner:not(.hidden)) {
   100% { transform: translateY(-10px); }
 }
 
+/* Make all close/return icons ('X') white and highly visible */
+.btn-icon, .close-modal, .back-to-hub-btn, .btn-icon.close-modal, .btn-icon.back-to-hub-btn {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
