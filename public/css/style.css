@@ -782,6 +782,8 @@ body.battery-saver .glass-card {
   .briefcase-card:nth-child(3) { animation-delay: 0.21s; }
   .briefcase-card:nth-child(4) { animation-delay: 0.29s; }
   @keyframes briefcasePop { from { opacity: 0; transform: translateY(16px) scale(0.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  /* Deal-pending re-renders must show cards immediately — no pop-in. */
+  .skip-anim .briefcase-card { animation: none !important; opacity: 1 !important; }
 }
 
 .briefcase-card::after {

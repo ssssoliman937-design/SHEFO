@@ -1462,6 +1462,13 @@ document.addEventListener('DOMContentLoaded', () => {
     briefcasesContainer.innerHTML = '';
     const raw = roomState.turnState.briefcases;
     const briefcases = Array.isArray(raw) ? raw : (raw ? Object.values(raw) : []);
+    // Skip pop-in animation when a deal decision is pending: the container was
+    // just cleared and re-injected due to a Firebase update, so starting each
+    // card at opacity:0 again makes the grid look empty while the animation
+    // runs. Instant opacity:1 keeps cards visible during the deal panel.
+    const turnStatus = roomState.turnState.status || '';
+    const dealPending = turnStatus === 'picked_1_pending_deal' || turnStatus === 'picked_2_pending_deal';
+    briefcasesContainer.classList.toggle('skip-anim', dealPending);
 
     // Add lock waiting notice if not my turn
     let waitingNotice = document.getElementById('waiting-turn-notice');
