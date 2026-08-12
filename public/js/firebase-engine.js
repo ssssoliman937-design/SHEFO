@@ -627,7 +627,7 @@ const FirebaseEngine = {
       // "choose" the shielded player, executeSteal rejects it, and the
       // match gets stuck at pre_match_steal forever with no retry.
       const oppPos = strongestPos(room.host?.squad, room.host?.protectedSlot);
-      if (!oppPos) {
+      if (!oppPos || !myPos) {
         FirebaseEngine.skipSteal(roomId).finally(() => window._aiStealRooms.delete(roomId));
         return;
       }
@@ -817,7 +817,7 @@ const FirebaseEngine = {
   finalizeSelection(roomId, roomState, briefcase) {
     const roomRef = db.ref('dond_rooms/' + roomId);
 
-    roomRef.once('value').then(snapshot => {
+    return roomRef.once('value').then(snapshot => {
       const freshRoom = snapshot.val();
       if (!freshRoom) return;
 
@@ -838,9 +838,13 @@ const FirebaseEngine = {
         newHelper = briefcase.helperCard;
       }
 
-      roomRef.child(playerKey + '/squad/' + posKey).set(briefcase.item);
-      roomRef.child(playerKey + '/helperCard').set(newHelper);
-      roomRef.child('turnState/briefcases').set(allRevealedBriefcases);
+      // Merge squad slot, helperCard, and briefcases into one atomic write
+      // to prevent clients from seeing a partial state between the three.
+      const atomicUpdate = {
+        [`${playerKey}/squad/${posKey}`]: briefcase.item,
+        [`${playerKey}/helperCard`]: newHelper,
+        'turnState/briefcases': allRevealedBriefcases
+      };
 
       // Mark this real person as drafted room-wide (both sides, every round,
       // regardless of which edition/card they were picked as) so they can
@@ -849,10 +853,11 @@ const FirebaseEngine = {
         const normName = normPlayerName(briefcase.item.name);
         const existingUsed = freshRoom.usedPlayerIds || [];
         if (!existingUsed.includes(normName)) {
-          roomRef.child('usedPlayerIds').set(existingUsed.concat([normName]));
+          atomicUpdate.usedPlayerIds = existingUsed.concat([normName]);
         }
       }
 
+      return roomRef.update(atomicUpdate).then(() => {
       // Transition turn after 3.5 seconds, reading a fresh snapshot again so
       // we compute the next turn/position from current data, not the state
       // captured when this pick started.
@@ -899,9 +904,10 @@ const FirebaseEngine = {
               }
             });
           }
-        });
+        }).catch(err => console.error('Turn advance failed:', err));
       }, 3500);
-    });
+      }); // closes roomRef.update(atomicUpdate).then(
+    }).catch(err => console.error('finalizeSelection failed:', err));
   },
 
   // Right after the draft ends (and again after each protection choice/skip
@@ -1493,16 +1499,13 @@ const FirebaseEngine = {
     const trimmed = String(text || '').trim().slice(0, 200);
     if (!trimmed) return Promise.resolve();
     const roomRef = db.ref((roomsPath || 'dond_rooms') + '/' + roomId);
-    return roomRef.child('chat').once('value').then(snapshot => {
-      const existing = snapshot.val() || [];
-      const next = existing.concat([{
-        senderId: myPlayerId,
-        senderName: sanitizeName(senderName),
-        text: trimmed,
-        timestamp: Date.now()
-      }]).slice(-30);
-      return roomRef.child('chat').set(next);
-    });
+    const msg = {
+      senderId: myPlayerId,
+      senderName: sanitizeName(senderName),
+      text: trimmed,
+      timestamp: Date.now()
+    };
+    return roomRef.child('chat').transaction(existing => (existing || []).concat([msg]).slice(-30));
   },
 
   restartGame(roomId) {
@@ -1515,10 +1518,14 @@ const FirebaseEngine = {
         currentTurn: 'host',
         positionIndex: 0,
         stealBy: null,
+        winner: null,
+        usedPlayerIds: [],
         'host/squad': emptySquad,
         'host/helperCard': null,
+        'host/protectedSlot': null,
         'guest/squad': emptySquad,
         'guest/helperCard': null,
+        'guest/protectedSlot': null,
         turnState: {
           positionKey: 'GK',
           positionNameAr: POSITION_NAMES_AR['GK'],

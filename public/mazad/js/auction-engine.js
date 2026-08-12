@@ -62,16 +62,12 @@ function mazadNextNeededBase(room) {
   return null;
 }
 
-// Prefers an empty slot in the same base position (the rule the user asked
-// for explicitly). Falls back to any other empty slot when that base has no
-// room left - unavoidable in classic mode, where every base has exactly one
-// slot and the auctioned player themself just took it. Returns null if the
-// whole squad is already full (bonus/consolation silently dropped).
+// Returns an empty slot in the same base position, or null.
+// Bonus/consolation is silently dropped when the base is already full —
+// never spill into a different position (e.g. DEF after a GK round).
 function mazadFindSlotFor(squad, base, squadMode) {
   const sameBase = mazadEmptySlotsForBase(squad, base, squadMode);
-  if (sameBase.length) return sameBase[0];
-  const anyEmpty = getPositionsForMode(squadMode).filter(k => !(squad && squad[k]));
-  return anyEmpty.length ? anyEmpty[0] : null;
+  return sameBase.length ? sameBase[0] : null;
 }
 
 // Draws one unused player from a base position pool, at or above startRating,

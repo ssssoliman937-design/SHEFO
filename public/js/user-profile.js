@@ -287,7 +287,7 @@ const UserProfileManager = (() => {
     const recordEl = document.getElementById('user-record-display');
     if (recordEl) {
       if (AuthManager.isSignedIn()) {
-        recordEl.innerHTML = `فوز: ${profile.wins || 0} | خسارة: ${profile.losses || 0} | تعادل: ${profile.draws || 0} <br> <span style="color:var(--gold-primary); font-weight:bold;">🪙 الكوينز: ${profile.coins || 0}</span>`;
+        recordEl.innerHTML = `فوز: ${parseInt(profile.wins) || 0} | خسارة: ${parseInt(profile.losses) || 0} | تعادل: ${parseInt(profile.draws) || 0} <br> <span style="color:var(--gold-primary); font-weight:bold;">🪙 الكوينز: ${parseInt(profile.coins) || 0}</span>`;
       } else {
         recordEl.innerHTML = '';
       }

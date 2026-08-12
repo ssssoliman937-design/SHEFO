@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return checked ? checked.value : 'classic';
   }
 
-  btnCreateRoom.addEventListener('click', (e) => {
+  btnCreateRoom?.addEventListener('click', (e) => {
     if (e) e.preventDefault();
     const nameVal = requireName();
     if (!nameVal) return;
@@ -622,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 
-  btnJoinRoom.addEventListener('click', (e) => {
+  btnJoinRoom?.addEventListener('click', (e) => {
     if (e) e.preventDefault();
     const nameVal = requireName();
     if (!nameVal) return;
@@ -678,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  btnCopyCode.addEventListener('click', () => {
+  btnCopyCode?.addEventListener('click', () => {
     if (roomState && roomState.roomId) {
       navigator.clipboard.writeText(roomState.roomId);
       showNotification(`تم نسخ كود الغرفة: ${roomState.roomId}`);
@@ -749,7 +749,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Deep link init notice:', err);
   }
 
-  btnSoundToggle.addEventListener('click', () => {
+  btnSoundToggle?.addEventListener('click', () => {
+    if (!window.soundFX) return;
     const isMuted = window.soundFX.toggleMute();
     btnSoundToggle.textContent = isMuted ? '🔇' : '🔊';
     showNotification(isMuted ? 'تم كتم الصوت 🔇' : 'تم تشغيل الصوت 🔊');
@@ -783,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Live text chat - stored as a capped array on the room object itself
   // (dond_rooms/{id}/chat), same "one listener, whole room" pattern as the
   // rest of the engine instead of a second Firebase listener.
-  btnToggleChat.addEventListener('click', () => {
+  btnToggleChat?.addEventListener('click', () => {
     chatPanelOpen = !chatPanelOpen;
     chatPanel.classList.toggle('hidden', !chatPanelOpen);
     if (chatPanelOpen) {
@@ -792,11 +793,11 @@ document.addEventListener('DOMContentLoaded', () => {
       chatInput.focus();
     }
   });
-  btnCloseChat.addEventListener('click', () => {
+  btnCloseChat?.addEventListener('click', () => {
     chatPanelOpen = false;
     chatPanel.classList.add('hidden');
   });
-  chatForm.addEventListener('submit', (e) => {
+  chatForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const text = chatInput.value.trim();
     if (!text || !currentRoomId) return;
@@ -845,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showView('view-lobby');
   }
 
-  btnLeaveRoom.addEventListener('click', () => {
+  btnLeaveRoom?.addEventListener('click', () => {
     if (confirm('هتخرج من الغرفة وترجع للقائمة الرئيسية. متابعة؟')) {
       leaveCurrentRoom();
     }
@@ -874,7 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
     NotReadableError: '⚠️ حاجة تانية شغالة بالمايك دلوقتي - قفلها وجرب تاني.'
   };
 
-  btnToggleMic.addEventListener('click', () => {
+  btnToggleMic?.addEventListener('click', () => {
     if (typeof VoiceChat === 'undefined' || !currentRoomId || myRole === 'spectator') return;
     VoiceChat.toggle(currentRoomId, myRole, roomState?.isAiMode).then(isActive => {
       btnToggleMic.classList.toggle('mic-active', isActive);
@@ -887,20 +888,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  voiceVolumeSlider.addEventListener('input', () => {
+  voiceVolumeSlider?.addEventListener('input', () => {
     const vol = parseInt(voiceVolumeSlider.value, 10) / 100;
     remoteVoiceAudio.volume = vol;
     voiceVolumeLabel.textContent = `${voiceVolumeSlider.value}%`;
   });
 
   // DRAFT ACTION LISTENERS
-  btnDeal.addEventListener('click', () => {
+  btnDeal?.addEventListener('click', () => {
     triggerHaptic([40, 60, 40]);
     safePlaySound('playDeal');
     FirebaseEngine.confirmDeal(currentRoomId, roomState);
   });
 
-  btnNoDeal.addEventListener('click', () => {
+  btnNoDeal?.addEventListener('click', () => {
     triggerHaptic([30, 40]);
     safePlaySound('playClick');
     FirebaseEngine.rejectDeal(currentRoomId, roomState);
@@ -1257,7 +1258,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  btnRematch.addEventListener('click', () => {
+  btnRematch?.addEventListener('click', () => {
     triggerHaptic([30, 40]);
     safePlaySound('playClick');
     if (resultModalTimeoutId) { clearTimeout(resultModalTimeoutId); resultModalTimeoutId = null; }
