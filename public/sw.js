@@ -3,7 +3,7 @@
 // Bump CACHE_NAME any time this list changes, or returning visitors keep the
 // old cached index.html/scripts (a stale index.html means it won't even
 // request newly-added files like utils.js).
-const CACHE_NAME = 'dond-football-v44';
+const CACHE_NAME = 'dond-football-v45';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

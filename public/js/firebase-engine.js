@@ -663,7 +663,8 @@ const FirebaseEngine = {
 
   pickBriefcase(roomId, briefcaseIndex, roomState) {
     const roomRef = db.ref('dond_rooms/' + roomId);
-    const briefcases = [...roomState.turnState.briefcases];
+    const raw = roomState.turnState.briefcases;
+    const briefcases = Array.isArray(raw) ? [...raw] : (raw ? Object.values(raw) : []);
 
     if (!briefcases[briefcaseIndex] || briefcases[briefcaseIndex].isRevealed) return;
 
@@ -1238,7 +1239,7 @@ const FirebaseEngine = {
     let guestOnTarget = 0;
 
     const events = [];
-    const minutes = [6, 17, 28, 39, 45, 55, 66, 78, 86, 92];
+    const minutes = [3, 11, 18, 24, 31, 38, 44, 45, 52, 59, 63, 71, 77, 84, 88, 90, 92];
     const shotTypes = ['صاروخية لا تُصد ولا تُرَد', 'مقوسة R2 في الزاوية 90', 'رأسية متقنة بارتقاء خرافي', 'تسديدة أرضية زاحفة على يمين الحارس', 'ركلة جزاء محكمة في الشباك'];
 
     const playerPerf = {};
@@ -1260,7 +1261,23 @@ const FirebaseEngine = {
     let guestMomentum = 0;
     const weakerIsHost = hostStats.total < guestStats.total;
 
+    const goalTexts = [
+      (name) => `⚽ هههههدف أسطوري! ${name} يثير الجنون في الملعب! 🔥`,
+      (name) => `⚽ لا يُصدق! ${name} يحفر اسمه في التاريخ بهذا الهدف!`,
+      (name) => `⚽ كرة ذهبية! ${name} يسجل من موقف لا يُصدق!`,
+      (name, assist, style) => `⚽ ${name} يستقبل تمريرة ${assist || 'مجهود فردي'} ويرسلها في الشباك بتسديدة ${style}!`
+    ];
+
     minutes.forEach((minute) => {
+      if (minute === 45) {
+        events.push({
+          minute: 45, type: 'HALF_TIME', team: null, player: null,
+          text: `⏱️ نهاية الشوط الأول! النتيجة: ${hostGoals} - ${guestGoals}`,
+          score: `${hostGoals} - ${guestGoals}`
+        });
+        return;
+      }
+
       hostMomentum *= 0.5;
       guestMomentum *= 0.5;
 
@@ -1329,6 +1346,7 @@ const FirebaseEngine = {
         trackPoints(attPlayer, 4);
         trackPoints(assistPlayer, 2);
 
+        const goalFn = goalTexts[Math.floor(Math.random() * goalTexts.length)];
         events.push({
           minute,
           type: 'GOAL',
@@ -1336,7 +1354,7 @@ const FirebaseEngine = {
           player: attPlayer?.name || 'لاعب',
           rating: attPlayer?.rating || null,
           assist: assistPlayer?.name || null,
-          text: `⚽ GOALLL!! ${attPlayer?.name || 'لاعب'} يسجل هدفاً عالمياً! ${shotStyle}! (تمريرة حاسمة: ${assistPlayer?.name || 'مجهود فردي'})`,
+          text: goalFn(attPlayer?.name || 'لاعب', assistPlayer?.name, shotStyle),
           score: `${hostGoals} - ${guestGoals}`
         });
       } else if (rand < goalProbability + saveBand) {
@@ -1374,15 +1392,64 @@ const FirebaseEngine = {
           score: `${hostGoals} - ${guestGoals}`
         });
       } else {
-        events.push({
-          minute,
-          type: 'VAR',
-          team,
-          player: attacker.name || 'الفريق المهاجم',
-          rating: null,
-          text: `🖥️ تقنية الـ VAR تفحص اللقطة... الحكم يشير بمنح ركلة حرة واعدة لصالح ${attacker.name || 'الفريق المهاجم'}!`,
-          score: `${hostGoals} - ${guestGoals}`
-        });
+        const r2 = Math.random();
+        if (r2 < 0.18) {
+          events.push({
+            minute, type: 'CORNER', team,
+            player: attPlayer?.name || 'لاعب', rating: attPlayer?.rating || null,
+            text: `🚩 ركنية خطيرة! ${attPlayer?.name || 'لاعب'} يعدّل الكرة ويضعها في الزاوية...`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        } else if (r2 < 0.36) {
+          events.push({
+            minute, type: 'FREEKICK', team,
+            player: attPlayer?.name || 'لاعب', rating: attPlayer?.rating || null,
+            text: `🥊 ركلة حرة واعدة في منطقة خطرة! ${attPlayer?.name || 'لاعب'} يستعد للتنفيذ!`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        } else if (r2 < 0.54) {
+          events.push({
+            minute, type: 'OFFSIDE', team,
+            player: attPlayer?.name || 'لاعب', rating: attPlayer?.rating || null,
+            text: `🚩 تسلل! الحكم يرفع العلم ويلغي الهجوم!`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        } else if (r2 < 0.70) {
+          events.push({
+            minute, type: 'CHANCE_MISSED', team,
+            player: attPlayer?.name || 'لاعب', rating: attPlayer?.rating || null,
+            text: `😱 فرصة ضائعة! ${attPlayer?.name || 'لاعب'} يرسل الكرة في السماء من مسافة قريبة!`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        } else if (r2 < 0.84) {
+          events.push({
+            minute, type: 'COUNTER_ATTACK', team,
+            player: attPlayer?.name || 'لاعب', rating: attPlayer?.rating || null,
+            text: `⚡ هجمة مرتدة خاطفة! ${attPlayer?.name || 'لاعب'} يتحدى الدفاع وحده!`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        } else if (r2 < 0.93) {
+          events.push({
+            minute, type: 'VAR', team,
+            player: attacker.name || 'الفريق المهاجم', rating: null,
+            text: `🖥️ تقنية الـ VAR تفحص اللقطة... الحكم يشير بمنح ركلة حرة واعدة لصالح ${attacker.name || 'الفريق المهاجم'}!`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        } else if (r2 < 0.98) {
+          events.push({
+            minute, type: 'PENALTY', team,
+            player: attPlayer?.name || 'لاعب', rating: attPlayer?.rating || null,
+            text: `⚠️ ركلة جزاء! ${attPlayer?.name || 'لاعب'} يتقدم لتنفيذ العقوبة...`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        } else {
+          events.push({
+            minute, type: 'RED_CARD', team: team === 'host' ? 'guest' : 'host',
+            player: defDEF?.name || 'المدافع', rating: defDEF?.rating || null,
+            text: `🟥 طرد! ${defDEF?.name || 'لاعب'} يغادر الملعب بعد تدخل خطير!`,
+            score: `${hostGoals} - ${guestGoals}`
+          });
+        }
       }
     });
 
@@ -1424,7 +1491,7 @@ const FirebaseEngine = {
     // `roomState.host.id === myPlayerId`, but this function is called by
     // whoever makes the LAST draft pick - in PvP that is always the guest,
     // so the ticker never ran and PvP matches never finished.
-    // 10 ticks at 800ms = 8 real seconds total. Capped at 92 (not 90) - the
+    // 18 ticks at 1000ms = 18 real seconds total. Capped at 92 (not 90) - the
     // fixed event minutes below go up to 92 (injury time), and the event
     // feed only ever reveals an event once currentTime reaches its minute.
     // A 90 cap meant a 92' goal could count toward the final score (shown
@@ -1441,10 +1508,10 @@ const FirebaseEngine = {
     let sec = 0;
     const interval = setInterval(() => {
       sec++;
-      const timeVal = Math.min(sec * 10, 92);
+      const timeVal = Math.min(Math.round(sec * (92 / 18)), 92);
       roomRef.child('matchSimulation/currentTime').set(timeVal);
 
-      if (sec >= 10) {
+      if (sec >= 18) {
         clearInterval(interval);
         window._simTickerRooms.delete(simKey);
         let winner = 'draw';
@@ -1476,7 +1543,7 @@ const FirebaseEngine = {
           winner: winner
         });
       }
-    }, 800);
+    }, 1000);
   },
 
   sendEmoji(roomId, emojiSymbol) {

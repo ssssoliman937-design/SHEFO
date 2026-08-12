@@ -1460,7 +1460,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Briefcases Rendering
     briefcasesContainer.innerHTML = '';
-    const briefcases = roomState.turnState.briefcases || [];
+    const raw = roomState.turnState.briefcases;
+    const briefcases = Array.isArray(raw) ? raw : (raw ? Object.values(raw) : []);
 
     // Add lock waiting notice if not my turn
     let waitingNotice = document.getElementById('waiting-turn-notice');
@@ -2091,7 +2092,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // timeline (a ball for goals, gloves for saves, etc.) instead of relying
   // on the flavor text alone to signal what happened.
   const EVENT_TYPE_ICON = {
-    GOAL: '⚽', SAVE: '🧤', MISS: '🥅', CARD: '🟨', VAR: '🖥️'
+    GOAL: '⚽', SAVE: '🧤', MISS: '🥅', CARD: '🟨', VAR: '🖥️',
+    HALF_TIME: '⏱️', CORNER: '🚩', FREEKICK: '🥊', OFFSIDE: '🚩',
+    PENALTY: '⚠️', RED_CARD: '🟥', CHANCE_MISSED: '😱', COUNTER_ATTACK: '⚡'
   };
 
   // Short structured caption per event type - built from fields directly
@@ -2102,7 +2105,15 @@ document.addEventListener('DOMContentLoaded', () => {
     SAVE: () => 'تصدي رائع يحرم المنافس من هدف محقق',
     MISS: () => 'تسديدة قوية تصطدم بالقائم',
     CARD: () => 'بطاقة صفراء بعد تدخل قوي',
-    VAR: () => 'مراجعة الحكم للقطة عبر تقنية الفيديو'
+    VAR: () => 'مراجعة الحكم للقطة عبر تقنية الفيديو',
+    HALF_TIME: () => 'نهاية الشوط الأول',
+    CORNER: () => 'ركلة ركنية خطيرة',
+    FREEKICK: () => 'ركلة حرة في منطقة خطرة',
+    OFFSIDE: () => 'الحكم يرفع علم التسلل',
+    PENALTY: () => 'ركلة جزاء من نقطة الـ 11',
+    RED_CARD: () => 'طرد بعد تدخل خطير',
+    CHANCE_MISSED: () => 'فرصة ذهبية تضيع',
+    COUNTER_ATTACK: () => 'هجمة مرتدة خاطفة'
   };
   function eventCaption(evt) {
     const fn = EVENT_CAPTIONS[evt.type];
@@ -2129,7 +2140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // className is not an HTML sink, but normalize the type so a malformed
         // event object cannot throw and kill the whole feed render.
         const typeClass = String(evt.type || '').toLowerCase();
-        const sideClass = evt.team === 'guest' ? 'guest' : 'host';
+        const sideClass = evt.team === 'guest' ? 'guest' : (evt.team === null ? 'center' : 'host');
         div.className = `spine-evt ${typeClass} ${sideClass}`;
         const typeIcon = EVENT_TYPE_ICON[evt.type] || '📣';
         const ratingSuffix = evt.rating ? ` (${esc(evt.rating)})` : '';
